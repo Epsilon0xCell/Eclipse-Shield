@@ -66,9 +66,11 @@ def setup_production_logging():
 setup_production_logging()
 
 # Import the Flask app
-# I set logging up before importing the app, above, so the import and
-# the first create_app call already log in the production shape
-# instead of the library defaults.
+# The setup call above has to run before this import.
+# setup_production_logging points the root logger at the rotating
+# eclipse_shield.log file, or at the console alone inside Docker, and
+# create_app writes startup lines while it builds. Importing the app
+# first would send those first lines to the default logging setup.
 try:
     from secure_app import create_app
     application = create_app()

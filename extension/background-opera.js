@@ -93,10 +93,10 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 // === CORE BLOCKING FUNCTIONALITY ===
 // Block all browsing when no session is active
 
-// The blocked and allowed lists are keyed by the string this function
-// returns, so its shape is a storage contract, not a display choice.
-// If I change what it strips or folds, old stored entries stop matching
-// the same page visited again.
+// Same storage contract as the Chrome copy of this function: the
+// blocked and allowed lists key on the string returned here. I change
+// this function only together with its Chrome twin, because both
+// builds read the same shape of stored entries.
 // Helper function to normalize URLs for consistent checking
 function normalizeUrl(url) {
     try {

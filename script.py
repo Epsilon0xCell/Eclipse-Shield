@@ -15,9 +15,12 @@ try:
     from security import InputValidator
 except ImportError:
     # Fallback if security module not available
-    # I keep this fallback small. It only has to stop the analyzer from
-    # crashing on a checkout where security.py is missing. It is not the
-    # real validator, and the secure app never relies on it.
+    # This fallback is far weaker than security.py, and the difference
+    # is concrete: its validate_url checks a scheme and a host and
+    # nothing else, where the real one also blocks loopback and private
+    # addresses. It exists so a checkout missing security.py still runs
+    # the analyzer. The secure app imports the real class, never this
+    # one.
     class InputValidator:
         @staticmethod
         def validate_url(url):

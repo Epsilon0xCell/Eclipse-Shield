@@ -147,10 +147,10 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 // === CORE BLOCKING FUNCTIONALITY ===
 // Block all browsing when no session is active
 
-// The blocked and allowed lists are keyed by the string this function
-// returns, so its shape is a storage contract, not a display choice.
-// If I change what it strips or folds, old stored entries stop matching
-// the same page visited again.
+// This copy follows background-opera.js, the variant it was copied
+// from. The stored lists key on the string normalizeUrl returns, so
+// the copied function has to keep the same stripping and folding as
+// its source, or entries already in storage stop matching pages.
 // Helper function to normalize URLs for consistent checking
 function normalizeUrl(url) {
     try {
