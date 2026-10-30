@@ -243,10 +243,13 @@ class LocalSecurityTester:
             try:
                 response = self.session.post(f"{self.base_url}/analyze", json=payload)
                 if response.status_code == 400:
-                    self.log_result(f"Input Validation {i+1}", True, 
+                    self.log_result(f"Input Validation {i+1}", True,
                                    f"Rejected: {payload['url']}")
+                elif response.status_code == 429:
+                    self.log_result(f"Input Validation {i+1}", False,
+                                   "Inconclusive: rate limited (429) before validation; validation tests must run before the rate limiting test")
                 else:
-                    self.log_result(f"Input Validation {i+1}", False, 
+                    self.log_result(f"Input Validation {i+1}", False,
                                    f"Accepted: {payload['url']}")
             except Exception as e:
                 self.log_result(f"Input Validation {i+1}", False, f"Error: {e}")
@@ -292,15 +295,19 @@ class LocalSecurityTester:
         print(f"✅ Server accessible at {self.base_url}")
         print()
         
-        # Run all tests
+        # Run all tests. Order matters: /analyze is strictly rate limited
+        # (10/minute), so the rate limiting test runs LAST. It used to run
+        # before input validation, exhaust the quota, and make every
+        # validation probe receive 429 instead of 400, which this suite
+        # then falsely reported as accepted input.
         self.test_docker_security()
         self.test_localhost_access()
         self.test_security_headers_localhost()
         self.test_chrome_extension_compatibility()
-        self.test_local_rate_limiting()
         self.test_container_isolation()
         self.test_input_validation_localhost()
         self.test_health_monitoring()
+        self.test_local_rate_limiting()
         
         # Generate report
         self.generate_localhost_report()

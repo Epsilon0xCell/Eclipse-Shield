@@ -8,11 +8,12 @@
 ./install-local.sh
 ```
 
-### 2. Add Your API Key
+### 2. Add Your API Key (optional)
 ```bash
 # Edit with your Google Generative AI API key
 nano api_key.txt
 ```
+Without a key, Eclipse Shield runs in local rules-only mode: allow and block lists, category rules, and context matching still work. Check which mode is active at `http://localhost:5000/health` (the `ai` field).
 
 ### 3. Start Eclipse Shield
 ```bash

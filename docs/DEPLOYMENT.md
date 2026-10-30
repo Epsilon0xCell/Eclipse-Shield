@@ -10,7 +10,7 @@ This guide covers deploying Eclipse Shield in production environments with full 
 
 ```bash
 # Clone repository
-git clone https://github.com/CY83R-3X71NC710N/Eclipse-Shield.git
+git clone https://github.com/Epsilon0xCell/Eclipse-Shield.git
 cd Eclipse-Shield
 
 # Run production deployment script
@@ -64,7 +64,7 @@ sudo -u eclipse-shield -i
 
 # Clone repository
 cd /opt/eclipse-shield
-git clone https://github.com/CY83R-3X71NC710N/Eclipse-Shield.git app
+git clone https://github.com/Epsilon0xCell/Eclipse-Shield.git app
 cd app
 
 # Create virtual environment

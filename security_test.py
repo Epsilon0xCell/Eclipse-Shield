@@ -44,16 +44,20 @@ class SecurityTester:
             response = self.session.get(f"{self.base_url}/")
             headers = response.headers
             
-            # Check for security headers
+            # Check for security headers.
+            # This suite targets the localhost deployment profile
+            # (see security.py and test-local.py): X-Frame-Options may be
+            # SAMEORIGIN (the block and popup pages are framed by the
+            # extension on the same origin), and HSTS must NOT be required
+            # over plain HTTP on localhost. HSTS is checked separately in
+            # test_https_redirect, only for HTTPS base URLs.
             security_headers = {
                 'X-Content-Type-Options': 'nosniff',
-                'X-Frame-Options': 'DENY',
                 'X-XSS-Protection': '1; mode=block',
-                'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
                 'Content-Security-Policy': True,  # Just check presence
                 'Referrer-Policy': 'strict-origin-when-cross-origin'
             }
-            
+
             for header, expected in security_headers.items():
                 if header in headers:
                     if expected is True or expected in headers[header]:
@@ -62,6 +66,12 @@ class SecurityTester:
                         self.log_result(f"Security Header: {header}", False, f"Incorrect value: {headers[header]}")
                 else:
                     self.log_result(f"Security Header: {header}", False, "Missing")
+
+            frame_options = headers.get('X-Frame-Options')
+            if frame_options in ('DENY', 'SAMEORIGIN'):
+                self.log_result("Security Header: X-Frame-Options", True, f"Present: {frame_options}")
+            else:
+                self.log_result("Security Header: X-Frame-Options", False, f"Missing or unexpected value: {frame_options}")
                     
         except Exception as e:
             self.log_result("Security Headers Test", False, f"Error: {e}")
@@ -106,10 +116,16 @@ class SecurityTester:
             try:
                 response = self.session.post(f"{self.base_url}/analyze", json=payload)
                 if response.status_code == 400:
-                    self.log_result(f"Input Validation {i+1}", True, 
+                    self.log_result(f"Input Validation {i+1}", True,
                                    f"Rejected malicious input: {payload}")
+                elif response.status_code == 429:
+                    # A 429 means the request was rate limited before any
+                    # validation happened. That is a test ordering problem,
+                    # not evidence the input was accepted.
+                    self.log_result(f"Input Validation {i+1}", False,
+                                   "Inconclusive: rate limited (429) before validation; input validation tests must run before the rate limiting test")
                 else:
-                    self.log_result(f"Input Validation {i+1}", False, 
+                    self.log_result(f"Input Validation {i+1}", False,
                                    f"Accepted malicious input: {payload}")
             except Exception as e:
                 self.log_result(f"Input Validation {i+1}", False, f"Error: {e}")
@@ -242,17 +258,21 @@ class SecurityTester:
     def test_https_redirect(self):
         """Test HTTPS redirect (if applicable)."""
         print("\n=== Testing HTTPS Redirect ===")
-        
-        # This test would be more relevant in production with HTTPS configured
+
         try:
             response = self.session.get(f"{self.base_url}/", allow_redirects=False)
             hsts_header = response.headers.get('Strict-Transport-Security')
-            
+
             if hsts_header:
                 self.log_result("HSTS Header", True, f"HSTS header present: {hsts_header}")
+            elif self.base_url.startswith("https://"):
+                self.log_result("HSTS Header", False, "HSTS header missing on an HTTPS deployment")
             else:
-                self.log_result("HSTS Header", False, "HSTS header missing (may be OK for development)")
-                
+                # HSTS over plain HTTP is ignored by browsers and pinning
+                # localhost to HTTPS would break the local deployment;
+                # its absence here is correct, not a vulnerability.
+                self.log_result("HSTS Header", True, "Correctly absent for HTTP localhost deployment (required only under HTTPS)")
+
         except Exception as e:
             self.log_result("HTTPS Redirect Test", False, f"Error: {e}")
 
@@ -271,9 +291,13 @@ class SecurityTester:
             print(f"Server not accessible at {self.base_url}")
             return
         
-        # Run all tests
+        # Run all tests. Order matters: /analyze is strictly rate limited
+        # (10/minute), so the validation tests that depend on its status
+        # codes must run BEFORE the rate limiting test exhausts the quota
+        # for a minute. Running rate limiting second, as this suite used
+        # to, made every later /analyze test receive 429 and falsely
+        # report valid rejections as accepted input.
         self.test_security_headers()
-        self.test_rate_limiting()
         self.test_input_validation()
         self.test_sql_injection()
         self.test_xss_protection()
@@ -281,6 +305,7 @@ class SecurityTester:
         self.test_csrf_protection()
         self.test_information_disclosure()
         self.test_https_redirect()
+        self.test_rate_limiting()
         
         # Generate report
         self.generate_report()

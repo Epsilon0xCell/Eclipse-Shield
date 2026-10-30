@@ -27,10 +27,12 @@ except ImportError:
 
 # --- Flask App Setup ---
 app = Flask(__name__,
-    static_folder='extension',
+    static_folder=None,  # See secure_app.py: a static folder named
+                         # 'extension' registers a built-in /extension
+                         # route that shadows the checked routes below.
     template_folder='extension'
 )
-app.secret_key = 'secret_key_here' # CHANGE THIS IN PRODUCTION
+app.secret_key = os.environ.get('SECRET_KEY') or __import__('secrets').token_urlsafe(32)
 
 # Enable detailed logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -532,7 +534,7 @@ if __name__ == '__main__':
         # as it restarts the process. The atexit cleanup should generally handle this,
         # but be aware if you see oddities during development.
         # Setting use_reloader=False might be more stable with PID files if `debug=True` causes issues.
-        app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False) # Consider use_reloader=False for stability with PID file
+        app.run(host='0.0.0.0', port=5000, debug=os.environ.get('FLASK_DEBUG') == '1', use_reloader=False) # Consider use_reloader=False for stability with PID file
     except Exception as e:
         logger.error(f"Flask application failed to start: {e}")
         remove_pid_file() # Attempt cleanup even if app.run fails immediately

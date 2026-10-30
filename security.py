@@ -102,24 +102,35 @@ class InputValidator:
             
         try:
             parsed = urlparse(url)
-            
+
             # Block dangerous schemes
             if parsed.scheme not in ['http', 'https']:
                 return False
-                
-            # Block localhost access from non-local requests
-            if parsed.hostname in ['localhost', '127.0.0.1', '0.0.0.0']:
-                return True  # Allow for development
-                
-            # Block private IP ranges
+
+            hostname = parsed.hostname
+            if not hostname:
+                return False
+
+            # Block loopback hosts. The URLs submitted to /analyze are
+            # productivity classification targets, never destinations this
+            # server fetches, and loopback targets (router admin panels,
+            # local services, this app itself) are not legitimate browsing
+            # targets for the extension to classify.
+            if hostname in ['localhost', '127.0.0.1', '0.0.0.0', '::1']:
+                logger.warning(f"Blocked loopback access: {url}")
+                return False
+
+            # Block private, loopback, link-local and reserved IP ranges
             try:
-                ip = ipaddress.ip_address(parsed.hostname)
-                if ip.is_private:
-                    logger.warning(f"Blocked private IP access: {url}")
+                ip = ipaddress.ip_address(hostname)
+                if (ip.is_private or ip.is_loopback or ip.is_link_local
+                        or ip.is_reserved or ip.is_multicast
+                        or ip.is_unspecified):
+                    logger.warning(f"Blocked private/reserved IP access: {url}")
                     return False
             except ValueError:
                 pass  # Not an IP address, continue validation
-                
+
             return True
             
         except Exception as e:
@@ -240,16 +251,36 @@ def require_api_key(f):
     return decorated_function
 
 def secure_filename(filename: str) -> str:
-    """Secure a filename for safe storage."""
-    # Remove path separators and dangerous characters
-    filename = re.sub(r'[^\w\-_\.]', '', filename)
-    
-    # Remove leading dots and spaces
-    filename = filename.lstrip('. ')
-    
-    # Limit length
-    if len(filename) > 255:
-        name, ext = os.path.splitext(filename)
-        filename = name[:255-len(ext)] + ext
-    
-    return filename or 'unnamed'
+    """Secure a relative file path for safe serving.
+
+    Path aware: legitimate subdirectory separators are preserved so nested
+    assets (for example matrix-animation/js/main.js) keep working, while
+    traversal segments, backslashes, and leading dots are removed. Callers
+    should still pass the result through a safe join (Flask's
+    send_from_directory does this) as a second layer of defense.
+    """
+    if not filename or not isinstance(filename, str):
+        return 'unnamed'
+
+    parts = []
+    for part in filename.replace('\\', '/').split('/'):
+        if part in ('', '.'):
+            continue
+        if part == '..':
+            # Traversal attempt: drop the whole path; the resulting
+            # placeholder name will not resolve to a real file.
+            return 'unnamed'
+        # Remove dangerous characters, then leading dots and spaces
+        part = re.sub(r'[^\w\-_\.]', '', part).lstrip('. ')
+        if part:
+            parts.append(part)
+
+    cleaned = '/'.join(parts)
+
+    # Limit length of the final path segment
+    if parts and len(parts[-1]) > 255:
+        name, ext = os.path.splitext(parts[-1])
+        parts[-1] = name[:255 - len(ext)] + ext
+        cleaned = '/'.join(parts)
+
+    return cleaned or 'unnamed'

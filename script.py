@@ -48,42 +48,71 @@ if not logger.handlers:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
-def load_api_key() -> str:
-    """Load API key from file or environment variable."""
-    logger.debug("load_api_key - START")
-    api_key = os.getenv("API_KEY")
-    if not api_key:
-        try:
-            with open("api_key.txt", "r") as f:
-                api_key = f.read().strip()
-                logger.debug("load_api_key - API key loaded from api_key.txt")
-        except FileNotFoundError:
-            error_msg = "API key not found in environment or api_key.txt"
-            logger.error(f"load_api_key - {error_msg}")
-            raise Exception(error_msg)
-    else:
-        logger.debug("load_api_key - API key loaded from environment variable")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    if not api_key: # Add an extra check in case file was empty
-        error_msg = "API key is empty or could not be loaded."
-        logger.error(f"load_api_key - {error_msg}")
-        raise Exception(error_msg)
+# Placeholder values that ship in example files and must never be treated
+# as a real, configured API key.
+PLACEHOLDER_API_KEYS = {
+    "", "api_key_value", "your-api-key", "your_api_key",
+    "your-google-gemini-api-key", "your_api_key_here",
+    "your-super-secret-key-change-this-in-production",
+}
 
-    logger.debug("load_api_key - END")
-    return api_key
+API_KEY_ENV_VARS = ("GOOGLE_API_KEY", "GEMINI_API_KEY", "API_KEY",
+                    "ECLIPSE_GEMINI_API_KEY")
 
-def load_domain_settings() -> Dict:
-    """Load domain settings from settings.json."""
-    logger.debug("load_domain_settings - START")
+
+def _is_real_api_key(value) -> bool:
+    return bool(value) and value.strip().lower() not in PLACEHOLDER_API_KEYS
+
+
+def load_api_key() -> Optional[str]:
+    """Load the Gemini API key from the environment or api_key.txt.
+
+    Resolution order: GOOGLE_API_KEY, GEMINI_API_KEY, API_KEY,
+    ECLIPSE_GEMINI_API_KEY, then api_key.txt located next to this module
+    (never relative to the process working directory).
+
+    Returns None when no real key is configured. A missing key is not an
+    error: the analyzer then runs in local rules-only mode. Placeholder
+    values from the shipped example files count as "not configured".
+    """
+    for env_var in API_KEY_ENV_VARS:
+        value = os.getenv(env_var)
+        if _is_real_api_key(value):
+            logger.debug(f"load_api_key - API key loaded from ${env_var}")
+            return value.strip()
+
+    key_file = os.getenv("ECLIPSE_API_KEY_FILE") or os.path.join(BASE_DIR, "api_key.txt")
     try:
-        with open("settings.json", "r") as f:
+        with open(key_file, "r") as f:
+            value = f.read().strip()
+        if _is_real_api_key(value):
+            logger.debug("load_api_key - API key loaded from api_key.txt")
+            return value
+        logger.warning("load_api_key - api_key.txt holds a placeholder or empty value; treating as not configured")
+    except FileNotFoundError:
+        logger.warning("load_api_key - No API key in environment or api_key.txt; AI features disabled")
+
+    return None
+
+def load_domain_settings(settings_path: Optional[str] = None) -> Dict:
+    """Load domain settings from settings.json.
+
+    The path resolves relative to this module's directory, not the process
+    working directory, so the app can be launched from anywhere.
+    """
+    logger.debug("load_domain_settings - START")
+    path = (settings_path or os.getenv("ECLIPSE_SETTINGS_FILE")
+            or os.path.join(BASE_DIR, "settings.json"))
+    try:
+        with open(path, "r") as f:
             settings = json.load(f)
             logger.debug("load_domain_settings - Settings loaded from settings.json")
-            logger.debug(f"load_domain_settings - Settings content: {settings}") # Log settings content
             logger.debug("load_domain_settings - END - SUCCESS")
             return settings
     except FileNotFoundError:
-        error_msg = "settings.json file not found."
+        error_msg = f"settings.json file not found at {path}."
         logger.error(f"load_domain_settings - {error_msg}")
         raise FileNotFoundError(error_msg)
     except json.JSONDecodeError as e: # Pass error details
@@ -95,51 +124,154 @@ def load_domain_settings() -> Dict:
         raise
 
 class ProductivityAnalyzer:
-    def __init__(self):
-        logger.debug("ProductivityAnalyzer.__init__ - START")
-        self.api_key = load_api_key()
-        self.settings = load_domain_settings()
+    # Deterministic question sequence used when AI is unavailable (or an
+    # AI call fails), so contextualization always terminates: after two
+    # answers the analyzer reports DONE instead of looping forever.
+    FALLBACK_QUESTIONS = [
+        "What specific task are you working on?",
+        "What are you trying to accomplish with this task?",
+    ]
 
-        # --- FIX: Configure API Key and Create Model Instance ---
-        try:
-            genai.configure(api_key=self.api_key)
-            # Ensure 'gemini-2.0-flash' is a valid model name accessible by your API key.
-            # If you encounter errors related to the model name later,
-            # try a known valid one like 'gemini-1.5-flash'.
-            self.model = genai.GenerativeModel('gemini-2.0-flash')
-            logger.debug("ProductivityAnalyzer.__init__ - Google Generative AI configured and model created.")
-        except Exception as e:
-            logger.error(f"ProductivityAnalyzer.__init__ - Failed to configure Google Generative AI or create model: {e}")
-            raise # Re-raise the exception to halt initialization if AI setup fails
+    # Local decision tables used when AI is unavailable. These only apply
+    # to sites that matched no explicit allow or block rule in settings.
+    LOCAL_PRODUCTIVE_CATEGORIES = {
+        'educational', 'documentation/reference', 'development/code',
+        'productivity/tools',
+    }
+    LOCAL_UNPRODUCTIVE_CATEGORIES = {
+        'social media', 'streaming/entertainment', 'gaming',
+        'e-commerce/shopping',
+    }
+
+    def __init__(self, api_key: Optional[str] = None,
+                 settings_path: Optional[str] = None,
+                 settings: Optional[Dict] = None,
+                 model=None):
+        logger.debug("ProductivityAnalyzer.__init__ - START")
+        self.settings = settings if settings is not None else load_domain_settings(settings_path)
+
+        self.model = None
+        self.ai_available = False
+        self.api_key = api_key if api_key is not None else load_api_key()
+
+        if model is not None:
+            # Injected model (used by tests with a clearly labeled fixture).
+            self.model = model
+            self.ai_available = True
+        elif self.api_key:
+            try:
+                genai.configure(api_key=self.api_key)
+                model_name = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+                self.model = genai.GenerativeModel(model_name)
+                self.ai_available = True
+                logger.debug("ProductivityAnalyzer.__init__ - Google Generative AI configured and model created.")
+            except Exception as e:
+                # AI setup failure must not take down the whole analyzer:
+                # explicit allow/block rules and local fallbacks still work.
+                logger.error(f"ProductivityAnalyzer.__init__ - AI setup failed, continuing in local rules-only mode: {e}")
+                self.model = None
+                self.ai_available = False
+        else:
+            logger.warning("ProductivityAnalyzer.__init__ - No Gemini API key configured; running in local rules-only mode")
 
         self.context_data = {}
-        # Removed self.client = genai.Client(...)
-        # --- End FIX ---
-
-        logger.debug("ProductivityAnalyzer.__init__ - Analyzer initialized, API key loaded, settings loaded, model configured.")
+        logger.debug(f"ProductivityAnalyzer.__init__ - Analyzer initialized (ai_available={self.ai_available}).")
         logger.debug("ProductivityAnalyzer.__init__ - END")
 
-    def get_next_question(self, domain: str, context: List[Dict]) -> Dict: # context is a list of dicts
-        """Get the next contextual question based on previous answers using AI."""
+    def _generate_text(self, prompt: str) -> str:
+        """Generate text with the configured model, with a hard timeout."""
+        if self.model is None:
+            raise RuntimeError("AI model is not configured")
+        try:
+            response = self.model.generate_content(
+                prompt, request_options={'timeout': 20}
+            )
+        except TypeError:
+            # Fixture models and older SDKs may not accept request_options.
+            response = self.model.generate_content(prompt)
+        if not hasattr(response, 'text'):
+            raise ValueError("Invalid response format from AI.")
+        return response.text.strip()
+
+    @staticmethod
+    def _normalize_context(context) -> List[Dict]:
+        """Normalize Q&A context to a list of {'question', 'answer'} dicts.
+
+        Accepts the list form the browser extension sends and the mapping
+        form {question: answer} that the HTTP API historically produced.
+        """
+        normalized = []
+        if isinstance(context, dict):
+            items = [{'question': k, 'answer': v} for k, v in context.items()]
+        elif isinstance(context, list):
+            items = context
+        else:
+            return normalized
+        for item in items[:10]:  # Limit to 10 items
+            if isinstance(item, dict):
+                question = InputValidator.sanitize_string(str(item.get('question', '')), 500)
+                answer = InputValidator.sanitize_string(str(item.get('answer', '')), 1000)
+                if question and answer:
+                    normalized.append({'question': question, 'answer': answer})
+        return normalized
+
+    def _fallback_question(self, context_list: List[Dict]) -> Dict:
+        """Next question from the deterministic local sequence."""
+        if len(context_list) < len(self.FALLBACK_QUESTIONS):
+            return {"question": self.FALLBACK_QUESTIONS[len(context_list)]}
+        return {"question": "DONE"}
+
+    def _local_fallback_decision(self, url: str, url_signals: dict,
+                                   context_relevance: dict) -> dict:
+        """Rule-based decision used when AI is unavailable or fails.
+
+        Built only from signals this module already computes locally:
+        the categorized hostname, search state, and context relevance.
+        """
+        category = url_signals.get('domain_type', 'general')
+
+        if context_relevance.get('score', 0.0) >= 0.5:
+            matched = ', '.join(context_relevance.get('matched_terms', []))
+            return {'isProductive': True,
+                    'explanation': f"Allowed by local rules: matches your task context ({matched})."}
+
+        if category in self.LOCAL_PRODUCTIVE_CATEGORIES:
+            return {'isProductive': True,
+                    'explanation': f"Allowed by local rules (AI unavailable): {category} site."}
+
+        if url_signals.get('is_search') and url_signals.get('search_query'):
+            return {'isProductive': True,
+                    'explanation': "Allowed by local rules (AI unavailable): search with an explicit query."}
+
+        if category in self.LOCAL_UNPRODUCTIVE_CATEGORIES:
+            return {'isProductive': False,
+                    'explanation': f"Blocked by local rules (AI unavailable): {category} site."}
+
+        return {'isProductive': False,
+                'explanation': "Blocked by local rules: AI is unavailable and no local rule matched this site."}
+
+    def get_next_question(self, domain: str, context=None) -> Dict:
+        """Get the next contextual question based on previous answers.
+
+        Context may be a list of {'question', 'answer'} dicts (what the
+        browser extension sends) or a {question: answer} mapping. When AI
+        is unavailable, or an AI call fails, a deterministic local question
+        sequence is used so the flow always reaches DONE.
+        """
         logger.debug(f"ProductivityAnalyzer.get_next_question - START - Domain: {domain}, Context: {context}")
-        
-        # Security validation
+
+        # Security validation: domain is a configured profile name
+        # (work, school, personal), not a hostname.
         domain = InputValidator.sanitize_string(domain, 100)
-        if not InputValidator.validate_domain(domain):
-            logger.warning(f"Invalid domain provided: {domain}")
+        if domain not in self.settings.get("domains", {}):
+            logger.warning(f"Unknown domain profile provided: {domain}")
             return {"question": "What are you trying to accomplish?"}
-        
-        # Validate and sanitize context
-        if isinstance(context, list):
-            sanitized_context = []
-            for item in context[:10]:  # Limit to 10 items
-                if isinstance(item, dict):
-                    question = InputValidator.sanitize_string(item.get('question', ''), 500)
-                    answer = InputValidator.sanitize_string(item.get('answer', ''), 1000)
-                    if question and answer:
-                        sanitized_context.append({'question': question, 'answer': answer})
-            context = sanitized_context
-        
+
+        context = self._normalize_context(context)
+
+        if not self.ai_available:
+            return self._fallback_question(context)
+
         try:
             if not context:
                 prompt = f"""As a productivity assistant, ask one direct question to understand what the user is working on in the {domain} domain.
@@ -167,19 +299,7 @@ class ProductivityAnalyzer:
                 Respond with either exactly 'DONE' or your single follow-up question (no other text)."""
                 logger.debug("ProductivityAnalyzer.get_next_question - Subsequent question - Prompt:\n" + prompt) # Log prompt
 
-            # --- FIX: Use self.model to generate content ---
-            response = self.model.generate_content(
-                contents=prompt
-                # Removed model="gemini-2.0-flash" as it's inherent in self.model
-            )
-            # --- End FIX ---
-
-            # Add safety check for response structure if needed, assuming .text exists
-            if not hasattr(response, 'text'):
-                 logger.error(f"ProductivityAnalyzer.get_next_question - AI response object does not have 'text' attribute. Response: {response}")
-                 raise ValueError("Invalid response format from AI.")
-
-            question = response.text.strip()
+            question = self._generate_text(prompt)
             logger.debug(f"ProductivityAnalyzer.get_next_question - AI Response Text: {question}") # Log response text
 
             if question.upper() == 'DONE':
@@ -192,11 +312,11 @@ class ProductivityAnalyzer:
             return {"question": question}
 
         except Exception as e:
-            logger.error(f"ProductivityAnalyzer.get_next_question - Error generating question: {e}", exc_info=True) # Add traceback info
-            default_question = "What are you trying to accomplish?"
-            logger.debug(f"ProductivityAnalyzer.get_next_question - Returning default question: {default_question}")
-            logger.debug("ProductivityAnalyzer.get_next_question - END - ERROR, returning default")
-            return {"question": default_question}
+            # Degrade to the deterministic local sequence instead of
+            # returning the same default question forever (which looped
+            # contextualize() and the extension UI indefinitely).
+            logger.error(f"ProductivityAnalyzer.get_next_question - AI error, using local fallback: {e}", exc_info=True)
+            return self._fallback_question(context)
 
     def contextualize(self, domain: str) -> None:
         """Ask focused questions one at a time to contextualize the task."""
@@ -610,15 +730,17 @@ class ProductivityAnalyzer:
         """
         logger.debug(f"analyze_website - START - URL: {url}, Domain: {domain}")
         
-        # Security validation
+        # Security validation. Note: "domain" here is a configured
+        # profile name (work, school, personal), not a hostname, so it is
+        # checked against settings keys rather than hostname syntax.
         if not InputValidator.validate_url(url):
             logger.warning(f"Invalid URL provided for analysis: {url}")
             return {'isProductive': False, 'explanation': 'Invalid URL format.'}
-        
+
         domain = InputValidator.sanitize_string(domain, 100)
-        if not InputValidator.validate_domain(domain):
-            logger.warning(f"Invalid domain provided for analysis: {domain}")
-            return {'isProductive': False, 'explanation': 'Invalid domain format.'}
+        if domain not in self.settings.get("domains", {}):
+            logger.warning(f"Unknown domain profile provided for analysis: {domain}")
+            return {'isProductive': False, 'explanation': f"Configuration for domain '{domain}' not found."}
         
         # Rate limiting check - prevent too many requests in short time
         current_time = datetime.now()
@@ -710,6 +832,11 @@ class ProductivityAnalyzer:
                  (contextualization_required and not self.context_data) or \
                  (not contextualization_required) # Use AI if not explicitly allowed/blocked and context isn't needed/used
 
+        if use_ai and not self.ai_available:
+            # No API key configured: decide with local rules only, and say so.
+            logger.info(f"analyze_website - AI unavailable, using local fallback for URL: {url}")
+            return self._local_fallback_decision(url, url_signals, context_relevance)
+
         if use_ai:
             logger.debug(f"analyze_website - Proceeding to AI analysis for URL: {url}")
             try:
@@ -754,18 +881,7 @@ class ProductivityAnalyzer:
 
                 logger.debug("analyze_website - AI Analysis Prompt:\n" + analysis_prompt)
 
-                # --- FIX: Use self.model for generation ---
-                response = self.model.generate_content(
-                    contents=analysis_prompt
-                    # Removed model="gemini-2.0-flash"
-                )
-                # --- End FIX ---
-
-                if not hasattr(response, 'text'):
-                    logger.error(f"analyze_website - AI response object does not have 'text' attribute. Response: {response}")
-                    raise ValueError("Invalid response format from AI.")
-
-                decision = response.text.strip()
+                decision = self._generate_text(analysis_prompt)
                 logger.info(f"analyze_website - AI Analysis Result for {url}: {decision}")
 
                 # Parse AI decision
@@ -794,10 +910,11 @@ class ProductivityAnalyzer:
                     return {'isProductive': False, 'explanation': explanation} # Return dict
 
             except Exception as e:
-                explanation = f"AI analysis failed: {e}"
-                logger.error(f"analyze_website - Error during AI analysis for {url}: {e}", exc_info=True)
-                logger.info("analyze_website - Defaulting to BLOCKED due to AI analysis error.")
-                return {'isProductive': False, 'explanation': explanation} # Return dict
+                # Do not leak internal exception text to the client and do
+                # not hard-block every unknown site: fall back to the same
+                # local rules used when no key is configured.
+                logger.error(f"analyze_website - AI analysis failed for {url}, using local fallback: {e}", exc_info=True)
+                return self._local_fallback_decision(url, url_signals, context_relevance)
 
         # --- 6. Default Decision ---
         # If we reach here, it means:

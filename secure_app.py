@@ -36,9 +36,22 @@ logger = logging.getLogger(__name__)
 def create_app(config_name='production'):
     """Create and configure the Flask application with security measures."""
     
+    # static_folder=None is deliberate: with static_folder='extension',
+    # Flask registers its built-in static route at /extension/<path:...>
+    # BEFORE the custom extension_files view below, silently shadowing it
+    # and serving every file type under extension/ with none of the
+    # view's allowlist checks. All extension assets are served through
+    # the checked routes instead.
     app = Flask(__name__,
-                static_folder='extension',
+                static_folder=None,
                 template_folder='extension')
+
+    # Absolute base for files this app reads directly with open(), so the
+    # app works no matter which directory it is launched from.
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    def ext_path(*parts):
+        return os.path.join(base_dir, 'extension', *parts)
     
     # Apply security configuration
     app.config.from_object(SecurityConfig)
@@ -182,9 +195,16 @@ def create_app(config_name='production'):
     def security_checks():
         """Perform security checks before each request."""
         client_ip = get_remote_address()
-        
-        # Rate limiting check
-        if security_middleware.is_rate_limited(client_ip):
+
+        # Failed-attempt throttling. Attempts are recorded by the data
+        # endpoints when input validation fails, and the block is enforced
+        # only on those same endpoints. Enforcing it on every route, as
+        # this used to, let ten bad inputs from one IP (for localhost, the
+        # only user) lock the whole app, including /health and static
+        # files, for an hour: a self inflicted denial of service that its
+        # own security test suite reliably triggered.
+        if (request.method == 'POST' and request.path in ('/analyze', '/get_question')
+                and security_middleware.is_rate_limited(client_ip)):
             logger.warning(f"Rate limit exceeded for IP: {client_ip}")
             return jsonify({'error': 'Rate limit exceeded'}), 429
         
@@ -290,7 +310,7 @@ def create_app(config_name='production'):
     def root():
         """Serve the main page."""
         try:
-            return send_from_directory('extension', 'popup.html')
+            return send_from_directory(ext_path(), 'popup.html')
         except Exception as e:
             logger.error(f"Error serving root page: {e}")
             return jsonify({'error': 'Internal server error'}), 500
@@ -301,7 +321,8 @@ def create_app(config_name='production'):
         return jsonify({
             'status': 'healthy',
             'timestamp': time.time(),
-            'version': '2.0.0'
+            'version': '2.0.0',
+            'ai': 'configured' if analyzer.ai_available else 'local-only'
         })
     
     @app.route('/test-simple')
@@ -319,11 +340,11 @@ def create_app(config_name='production'):
         # Validate file extension
         if '.' in filename:
             ext = filename.rsplit('.', 1)[1].lower()
-            if ext not in ['js', 'html', 'css', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'woff', 'woff2', 'json', 'glsl', 'wgsl', 'ttf']:
+            if ext not in ['js', 'html', 'css', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'woff', 'woff2', 'json', 'glsl', 'wgsl', 'ttf', 'txt']:
                 return jsonify({'error': 'File type not allowed'}), 403
-        
+
         try:
-            response = make_response(send_from_directory('extension', filename))
+            response = make_response(send_from_directory(ext_path(), filename))
             
             # Set appropriate content type
             if filename.endswith('.js'):
@@ -364,7 +385,7 @@ def create_app(config_name='production'):
                 return jsonify({'error': 'File type not allowed'}), 403
         
         try:
-            response = make_response(send_from_directory('extension/assets', filename))
+            response = make_response(send_from_directory(ext_path('assets'), filename))
             
             # Set appropriate content type
             if filename.endswith('.png'):
@@ -405,7 +426,15 @@ def create_app(config_name='production'):
             if not InputValidator.validate_domain(domain):
                 security_middleware.record_failed_attempt(get_remote_address())
                 return jsonify({'error': 'Invalid domain format'}), 400
-            
+
+            # "domain" is a configured profile name (work, school,
+            # personal), not a hostname. A syntactically valid hostname
+            # that is not a profile is a client error, not a 200 with a
+            # "configuration not found" analysis result.
+            if domain not in analyzer.settings.get('domains', {}):
+                security_middleware.record_failed_attempt(get_remote_address())
+                return jsonify({'error': f'Unknown domain profile: {domain}'}), 400
+
             # Sanitize session ID
             session_id = InputValidator.sanitize_string(session_id, 64)
             
@@ -477,21 +506,25 @@ def create_app(config_name='production'):
         try:
             domain = InputValidator.sanitize_string(data.get('domain', ''), 100)
             context = data.get('context', {})
-            
+
             if not InputValidator.validate_domain(domain):
                 return jsonify({'error': 'Invalid domain'}), 400
-            
-            # Sanitize context
+
+            if domain not in analyzer.settings.get('domains', {}):
+                return jsonify({'error': f'Unknown domain profile: {domain}'}), 400
+
+            # Normalize context to the list of Q&A pairs the analyzer and
+            # the browser extension both use. A {question: answer} mapping
+            # is converted instead of being passed through as a dict,
+            # which the analyzer's history formatting cannot consume.
             if isinstance(context, dict):
-                sanitized_context = {}
-                for k, v in list(context.items())[:5]:  # Limit context size
-                    if isinstance(k, str) and isinstance(v, str):
-                        key = InputValidator.sanitize_string(k, 200)
-                        value = InputValidator.sanitize_string(v, 500)
-                        if key and value:
-                            sanitized_context[key] = value
-                context = sanitized_context
-            
+                context = [
+                    {'question': InputValidator.sanitize_string(str(k), 200),
+                     'answer': InputValidator.sanitize_string(str(v), 500)}
+                    for k, v in list(context.items())[:5]
+                    if isinstance(k, str) and isinstance(v, str)
+                ]
+
             response = analyzer.get_next_question(domain, context)
             
             # Sanitize response
@@ -556,7 +589,7 @@ def create_app(config_name='production'):
         try:
             logger.info("ext_popup route called")
             # Read popup.html and add fallback storage
-            with open('extension/popup.html', 'r') as f:
+            with open(ext_path('popup.html'), 'r') as f:
                 popup_html = f.read()
             
             logger.info(f"Read popup.html, size: {len(popup_html)}")
@@ -582,7 +615,7 @@ def create_app(config_name='production'):
     def popup_js():
         """Serve popup.js for ext-popup context."""
         try:
-            response = make_response(send_from_directory('extension', 'popup.js'))
+            response = make_response(send_from_directory(ext_path(), 'popup.js'))
             response.headers['Content-Type'] = 'application/javascript'
             response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
             return response
@@ -594,7 +627,7 @@ def create_app(config_name='production'):
     def background_js():
         """Serve background.js if needed for ext-popup context."""
         try:
-            response = make_response(send_from_directory('extension', 'background.js'))
+            response = make_response(send_from_directory(ext_path(), 'background.js'))
             response.headers['Content-Type'] = 'application/javascript'
             response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
             return response
@@ -607,7 +640,7 @@ def create_app(config_name='production'):
         """Serve popup.js modified for iframe context with fallback storage."""
         try:
             # Read the original popup.js
-            with open('extension/popup.js', 'r') as f:
+            with open(ext_path('popup.js'), 'r') as f:
                 popup_js = f.read()
             
             # Add fallback for when message passing fails
@@ -745,7 +778,7 @@ def create_app(config_name='production'):
         """Serve extension popup with iframe-optimized JavaScript."""
         try:
             # Read popup.html and modify it to use the iframe-optimized JS
-            with open('extension/popup.html', 'r') as f:
+            with open(ext_path('popup.html'), 'r') as f:
                 popup_html = f.read()
             
             # Replace the script reference
@@ -768,7 +801,7 @@ def create_app(config_name='production'):
         try:
             # Read the popup.html file and modify it for standalone testing
             popup_html = None
-            with open('extension/popup.html', 'r') as f:
+            with open(ext_path('popup.html'), 'r') as f:
                 popup_html = f.read()
             
             # Add some debug JavaScript to help diagnose issues
@@ -814,7 +847,7 @@ def create_app(config_name='production'):
     def test_page():
         """Serve test page for browser connection testing."""
         try:
-            return send_from_directory('.', 'test-browser.html')
+            return send_from_directory(base_dir, 'test-browser.html')
         except Exception as e:
             logger.error(f"Error serving test page: {e}")
             return jsonify({'error': 'Test page unavailable'}), 500
@@ -829,7 +862,7 @@ def create_app(config_name='production'):
         """Serve matrix animation HTML for extension iframe."""
         try:
             # Serve the matrix animation from the extension folder
-            with open('extension/matrix-animation/index.html', 'r') as f:
+            with open(ext_path('matrix-animation', 'index.html'), 'r') as f:
                 matrix_html = f.read()
             
             # Inject a base tag to fix all relative paths at once
@@ -917,7 +950,7 @@ def create_app(config_name='production'):
         """Serve matrix animation HTML with path-based routing for extension iframe."""
         try:
             # Serve the matrix animation from the extension folder
-            with open('extension/matrix-animation/index.html', 'r') as f:
+            with open(ext_path('matrix-animation', 'index.html'), 'r') as f:
                 matrix_html = f.read()
             
             # Inject a base tag to fix all relative paths at once
@@ -1003,7 +1036,7 @@ def create_app(config_name='production'):
     def matrix_animation_wrapper():
         """Serve matrix animation wrapper HTML."""
         try:
-            return send_from_directory('extension', 'matrix-animation-wrapper.html')
+            return send_from_directory(ext_path(), 'matrix-animation-wrapper.html')
         except Exception as e:
             logger.error(f"Error serving matrix animation wrapper: {e}")
             return jsonify({'error': 'Wrapper not found'}), 404
@@ -1012,7 +1045,7 @@ def create_app(config_name='production'):
     def matrix_sandbox():
         """Serve matrix animation sandbox HTML."""
         try:
-            return send_from_directory('extension', 'matrix-sandbox.html')
+            return send_from_directory(ext_path(), 'matrix-sandbox.html')
         except Exception as e:
             logger.error(f"Error serving matrix sandbox: {e}")
             return jsonify({'error': 'Sandbox not found'}), 404

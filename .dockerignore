@@ -1,0 +1,9 @@
+.git
+.env
+.env.local
+api_key.txt
+logs
+__pycache__
+*.pyc
+.pytest_cache
+tests

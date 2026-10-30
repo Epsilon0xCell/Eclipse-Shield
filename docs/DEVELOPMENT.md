@@ -37,7 +37,7 @@ git clone https://github.com/YOUR_USERNAME/Eclipse-Shield.git
 cd Eclipse-Shield
 
 # Add upstream remote for staying sync with main repository
-git remote add upstream https://github.com/CY83R-3X71NC710N/Eclipse-Shield.git
+git remote add upstream https://github.com/Epsilon0xCell/Eclipse-Shield.git
 
 # Verify remotes
 git remote -v

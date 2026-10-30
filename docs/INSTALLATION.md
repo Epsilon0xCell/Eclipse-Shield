@@ -31,7 +31,7 @@ This guide provides detailed installation instructions for Eclipse Shield across
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/CY83R-3X71NC710N/Eclipse-Shield.git
+git clone https://github.com/Epsilon0xCell/Eclipse-Shield.git
 cd Eclipse-Shield
 
 # 2. Run the automated installer
@@ -50,7 +50,7 @@ echo "your-google-gemini-api-key" > api_key.txt
 
 #### Step 1: Clone Repository
 ```bash
-git clone https://github.com/CY83R-3X71NC710N/Eclipse-Shield.git
+git clone https://github.com/Epsilon0xCell/Eclipse-Shield.git
 cd Eclipse-Shield
 ```
 
@@ -104,7 +104,7 @@ gunicorn --config gunicorn.conf.py wsgi:application
 #### Installation Steps
 ```bash
 # 1. Clone repository
-git clone https://github.com/CY83R-3X71NC710N/Eclipse-Shield.git
+git clone https://github.com/Epsilon0xCell/Eclipse-Shield.git
 cd Eclipse-Shield
 
 # 2. Copy environment file

@@ -23,9 +23,17 @@ Eclipse Shield uses artificial intelligence to understand your current work cont
 **For macOS users (recommended):**
 
 1. **Read the [QUICKSTART.md](QUICKSTART.md) guide** - Complete setup in 3 simple steps
-2. **Get a Google Gemini API key** from [Google AI Studio](https://aistudio.google.com/)
-3. **Run the installer**: `./install-local.sh`
-4. **Add your API key**: Create `api_key.txt` with your actual API key
+2. **Run the installer**: `./install-local.sh`
+3. **Optional: add a Google Gemini API key** from [Google AI Studio](https://aistudio.google.com/), either in `api_key.txt` or as the `GOOGLE_API_KEY` environment variable
+
+**Without Docker, on any platform:**
+
+```bash
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt -r requirements-secure.txt
+python3 secure_app.py        # serves http://localhost:5000
+curl http://localhost:5000/health
+```
 
 **For other platforms or advanced setup:**
 - [Installation Guide](docs/INSTALLATION.md)
@@ -67,8 +75,8 @@ Eclipse Shield uses artificial intelligence to understand your current work cont
 
 ### Minimum Requirements
 - **Python 3.8+**
-- **Google Gemini API key** (free tier available)
 - **Modern web browser** (Chrome or Opera)
+- **Google Gemini API key** (optional, free tier available): enables AI decisions for sites that match no explicit rule. Without a key the analyzer runs in local rules-only mode: explicit allow and block lists, category rules, and context matching still work, and the `/health` endpoint reports `"ai": "local-only"`.
 
 ### For Production Use
 - **Redis** (for rate limiting and caching)
@@ -90,9 +98,14 @@ Eclipse Shield implements comprehensive security measures:
 
 For detailed security information, see [SECURITY.md](SECURITY.md).
 
-**Run Security Tests:**
+**Run Security Tests** (with the server running):
 ```bash
 python3 security_test.py http://localhost:5000
+```
+
+**Run the automated test suite** (no server or API key needed):
+```bash
+python3 -m pytest tests/ -q
 ```
 
 ---
