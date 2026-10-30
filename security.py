@@ -21,6 +21,11 @@ class SecurityConfig:
     """Security configuration class with secure defaults."""
     
     # Generate secure secret key
+    # If the environment holds no key, I mint a fresh one at import.
+    # That keeps a local run working with no setup. It also means
+    # sessions and tokens die on every restart, and each worker process
+    # holds a different key, so the Docker setup has to supply one
+    # through the environment for sessions to survive across workers.
     SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_urlsafe(32)
     
     # Session configuration (localhost-friendly)
@@ -77,6 +82,10 @@ class InputValidator:
     """Input validation utilities."""
     
     # Regex patterns for validation
+    # The pattern caps a top level domain at six letters, in the group
+    # below. Longer current endings fail this check even when the URL
+    # itself is fine. I keep the strict pattern and count those false
+    # rejects as a known cost of it.
     URL_PATTERN = re.compile(
         r'^https?://'  # http:// or https://
         r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'  # domain...
@@ -179,6 +188,10 @@ class SecurityMiddleware:
         self.failed_attempts = {}  # Simple in-memory store
         self.cleanup_time = time.time()
     
+    # I only drop an IP entry when every attempt in it is old. The list
+    # inside a kept entry is not trimmed, so old timestamps stay in it.
+    # is_rate_limited recounts inside its own window each time, so the
+    # stale entries cost memory, not wrong blocks.
     def cleanup_failed_attempts(self):
         """Clean up old failed attempts."""
         current_time = time.time()
@@ -241,6 +254,11 @@ def require_api_key(f):
             return jsonify({'error': 'Invalid API key format'}), 401
         
         # Here you would validate against your API key store
+        # As written, if no server key is set in the environment, any
+        # header value that meets the minimum length passes this check.
+        # secure_app imports this decorator but no route applies it, so
+        # that gap is dormant today. I keep it written down here so a
+        # future route does not inherit it by surprise.
         # For now, we'll check against environment variable
         valid_api_key = os.environ.get('ECLIPSE_SHIELD_API_KEY')
         if valid_api_key and not hmac.compare_digest(api_key, valid_api_key):

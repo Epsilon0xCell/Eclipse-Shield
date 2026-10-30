@@ -126,9 +126,16 @@ CORS(app,
          "max_age": 3600
      }})
 
+# app.py is the older plain Flask app. secure_app.py is the app the
+# Docker and gunicorn paths run, and wsgi.py falls back to this file
+# only when secure_app cannot be imported. Route changes have to be
+# made in both apps, or the fallback quietly drifts from the main app.
 analyzer = ProductivityAnalyzer()
 
 # Cache structure and functions (Keep existing)
+# This cache is module level and has no lock around it. The secure app
+# keeps the same shape behind a lock. In this older app I accept the
+# looser handling because it serves one local user at a time.
 url_cache = {
     'data': {},
     'timestamps': {},
@@ -465,6 +472,9 @@ def cleanup_cache_thread_func():
         except Exception as e:
              logger.error(f"Error during periodic cache cleanup: {e}")
 
+# This thread starts at import time, not under a main guard, so
+# importing this module for any reason starts it too. It is a daemon
+# thread, so it never holds a process open at shutdown.
 cleanup_thread = threading.Thread(target=cleanup_cache_thread_func, daemon=True)
 cleanup_thread.start()
 

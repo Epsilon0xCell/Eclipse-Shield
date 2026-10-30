@@ -1,5 +1,9 @@
 // redirect.js - UPDATED TO HANDLE 'get-current-tab' MESSAGE
 
+// This page is a shell. It hosts the popup in an iframe and passes stored
+// state into it after the frame loads, because the framed popup cannot
+// read chrome.storage on its own. The retry count below bounds how long
+// I keep trying to wire that up before the loading view is all I show.
 document.addEventListener('DOMContentLoaded', () => {
     const frame = document.getElementById('popup-frame');
     const loading = document.getElementById('loading');

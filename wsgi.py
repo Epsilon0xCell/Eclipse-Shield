@@ -66,10 +66,16 @@ def setup_production_logging():
 setup_production_logging()
 
 # Import the Flask app
+# I set logging up before importing the app, above, so the import and
+# the first create_app call already log in the production shape
+# instead of the library defaults.
 try:
     from secure_app import create_app
     application = create_app()
 except ImportError:
+    # I catch only ImportError here on purpose. If secure_app imports
+    # but fails while building the app, I want the server to stop
+    # loudly, not to swap in the older app with different checks.
     # Fallback to original app if secure_app doesn't exist yet
     from app import app as application
 

@@ -1,3 +1,7 @@
+// I keep the Opera background as its own file because Opera does not
+// allow chrome_url_overrides for most extensions, so new tab handling
+// has to watch tab creation instead of declaring an override page.
+// switch-browser.sh copies this file over background.js for Opera.
 // This is an Opera-specific background script that handles new tab detection
 // without using chrome_url_overrides which Opera doesn't allow for most extensions
 
@@ -89,6 +93,10 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 // === CORE BLOCKING FUNCTIONALITY ===
 // Block all browsing when no session is active
 
+// The blocked and allowed lists are keyed by the string this function
+// returns, so its shape is a storage contract, not a display choice.
+// If I change what it strips or folds, old stored entries stop matching
+// the same page visited again.
 // Helper function to normalize URLs for consistent checking
 function normalizeUrl(url) {
     try {

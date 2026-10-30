@@ -34,6 +34,10 @@ fi
 
 print_status "Python version check passed: $(python3 --version)"
 
+# This is the non Docker install path. install-local.sh is the Docker
+# one. I keep both because I test the app bare on this machine and run
+# it in Docker for the setup I hand to other people, and the two paths
+# install different requirement files.
 # Create virtual environment
 print_status "Creating Python virtual environment..."
 python3 -m venv venv

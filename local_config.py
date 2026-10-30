@@ -1,4 +1,9 @@
 # macOS-specific configuration for Eclipse Shield local deployment
+# Nothing in the running app imports this file. I keep it as the
+# written record of the local choices that the Docker files and the
+# secure_app settings were picked from, so the numbers have one place
+# to be read together. Changing a value here changes nothing at run
+# time, and I do not want a future edit to assume it does.
 
 # Localhost-specific security settings
 LOCAL_ALLOWED_HOSTS = [

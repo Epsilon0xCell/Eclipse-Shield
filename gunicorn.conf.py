@@ -11,6 +11,9 @@ bind = "0.0.0.0:5000"
 backlog = 2048
 
 # Worker processes
+# Workers are separate processes. Each one builds its own app, its own
+# analyzer, and its own in memory cache and rate counters. A limit that
+# reads as global in secure_app.py is per worker under this file.
 workers = multiprocessing.cpu_count() * 2 + 1
 worker_class = "sync"  # Use sync worker instead of gevent
 worker_connections = 1000
@@ -50,6 +53,10 @@ certfile = None
 # Worker recycling
 max_requests = 1000
 max_requests_jitter = 50
+# Note on the pair above: max_requests and its jitter are also set
+# higher up in this file, with a jitter of 100. This later pair is the
+# one gunicorn keeps. I leave both visible and say so here, instead of
+# letting a reader trust the first values they meet.
 
 # Preload application for better performance
 preload_app = True

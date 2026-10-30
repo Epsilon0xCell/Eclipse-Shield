@@ -1,3 +1,8 @@
+// I treat this file as a working copy, not the source I edit first.
+// switch-browser.sh copies background-opera.js or background-chrome.js
+// over this name, and the manifest for the active browser points here.
+// I edit the named variant and then copy it in. An edit made only here
+// is wiped by the next browser switch.
 // === DEBUGGING CONFIGURATION ===
 const DEBUG_MODE = true;
 function debugLog(message, ...args) {
@@ -142,6 +147,10 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 // === CORE BLOCKING FUNCTIONALITY ===
 // Block all browsing when no session is active
 
+// The blocked and allowed lists are keyed by the string this function
+// returns, so its shape is a storage contract, not a display choice.
+// If I change what it strips or folds, old stored entries stop matching
+// the same page visited again.
 // Helper function to normalize URLs for consistent checking
 function normalizeUrl(url) {
     try {

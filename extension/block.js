@@ -165,6 +165,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+// I cache an analysis on this page for one minute, keyed with the
+// session start time. The start time in the key means a new session
+// never reuses the last session's answer for the same page, and the one
+// minute window keeps a page I keep bouncing back to from calling the
+// server on every bounce.
 async function handleAnalysis(url, originalUrl, domain, sessionData) {
     isAnalyzing = true;
     showSection('analyzing');

@@ -5,6 +5,10 @@
 echo "🛡️  Eclipse Shield Browser Compatibility Switcher"
 echo "================================================"
 
+# I switch browsers by copying files over the live names, manifest.json
+# and background.js, because that is what the browser actually loads.
+# The named variants are the sources. The live names are copies, and I
+# edit the variants.
 if [ "$1" = "opera" ]; then
     echo "🔄 Switching to Opera-compatible version..."
     

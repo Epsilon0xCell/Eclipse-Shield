@@ -1,6 +1,11 @@
 //=+=+=+=+=+=+=+=+=+=+=
 //      Config
 //=+=+=+=+=+=+=+=+=+=+=
+// This file holds a fixed extension id in the address below. It only
+// works for the unpacked build with that id. A packed build signed with
+// a different id needs this line changed by hand, and nothing here warns
+// me when it is stale. I keep it because the Opera startpage path needs
+// a full address, not a relative one.
 let tabURL = "chrome-extension://cieilankhimefdbpgafdidcfmnnnbmaf/newtab.html"; // Enter the URL of the new "New Tab" page(you can use a extention url)
 
 // Override with custom page

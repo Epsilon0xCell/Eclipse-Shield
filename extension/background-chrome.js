@@ -1,3 +1,7 @@
+// I keep one background script per browser instead of branching inside
+// one file. manifest.json and manifest-chrome.json point at this file.
+// The Opera build runs its own file, copied in by switch-browser.sh, so
+// a fix I make here does not reach Opera until that file gets it too.
 // Add a wrapper function for runtime.sendMessage to handle missing receivers gracefully
 function sendMessageSafely(message) {
     try {
@@ -209,6 +213,10 @@ function isExemptUrl(url) {
 
 
 
+// The blocked and allowed lists are keyed by the string this function
+// returns, so its shape is a storage contract, not a display choice.
+// If I change what it strips or folds, old stored entries stop matching
+// the same page visited again.
 // Helper function to normalize URLs for consistent checking
 function normalizeUrl(url) {
     try {
@@ -513,6 +521,11 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
             referrer.includes('startpage.com/sp/search') // Check for Startpage search URLs (if user navigates there manually)
         );
 
+        // I split navigations into two paths on purpose. A click out of
+        // a search result is analyzed by the onUpdated path through the
+        // block page, while a typed or bookmarked visit is analyzed here.
+        // Running both paths on one navigation gave two answers racing
+        // for the same tab.
         if (isLikelySearchClick) {
             console.log('Likely search click, letting onUpdated handle analysis:', details.url);
             // Let the onUpdated listener handle analysis via the block page redirection

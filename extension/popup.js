@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // When the popup runs inside an iframe it cannot reach chrome.storage
+    // directly, so I ask the parent frame over a MessageChannel and wait
+    // on the port for the answer. If the parent never answers, the promise
+    // below never settles and the popup hangs. I know that shape and I
+    // watch for it when the popup opens blank.
     // Chrome Storage wrapper for iframe
     const chromeStorage = {
         get: function(keys) {
@@ -625,6 +630,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    // The DONE answer is a plain string contract with the server. The
+    // click handler above checks for exactly that word and starts the
+    // analysis. A question that happens to read as done would end the
+    // flow early, which is why the server only sends it as a whole reply.
     async function getNextQuestion(domain) {
         const response = await fetch('http://localhost:5000/get_question', {
             method: 'POST',

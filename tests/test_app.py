@@ -12,6 +12,10 @@ import pytest
 from script import ProductivityAnalyzer
 
 
+# I exercise the AI paths with the fixture model below, never with a
+# real key. The fixture returns one canned line, so a test failure here
+# is about my parsing and decision code, not about a network call or a
+# provider changing its answers between runs.
 class FixtureResponse:
     def __init__(self, text):
         self.text = text

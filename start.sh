@@ -8,6 +8,10 @@ if [ -f .env.local ]; then
     export $(cat .env.local | grep -v '^#' | xargs)
 fi
 
+# I read .env.local from the folder I am run in, and the compose file is
+# a relative path too, so this script only works from the repo root. I
+# run it there. From anywhere else it starts nothing and the health
+# address below stays silent.
 # Start services
 if command -v docker-compose >/dev/null 2>&1; then
     docker-compose -f docker-compose.local.yml up -d

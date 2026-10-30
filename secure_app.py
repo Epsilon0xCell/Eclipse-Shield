@@ -57,6 +57,10 @@ def create_app(config_name='production'):
     app.config.from_object(SecurityConfig)
     
     # Trust proxy headers if behind reverse proxy
+    # I trust one hop of each header because my Docker and nginx setup
+    # puts exactly one proxy in front of this app. On a bare run with no
+    # proxy, a client could spoof those headers, so this line assumes
+    # my deployment shape and is not safe to copy to a public host as is.
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
     
     # Initialize security middleware
@@ -94,6 +98,11 @@ def create_app(config_name='production'):
     })
     
     # Additional CORS handling for Chrome extensions
+    # I answer extension and localhost origins by reflecting the origin
+    # back, not with a wildcard, because these responses can carry
+    # credentials. The null origin and missing origin branches inside
+    # are for file pages and local tools, and I keep credentials off
+    # those two branches for the same reason.
     @app.after_request
     def handle_cors(response):
         origin = request.headers.get('Origin')
@@ -163,6 +172,11 @@ def create_app(config_name='production'):
     
     # Initialize analyzer
     analyzer = ProductivityAnalyzer()
+    # One analyzer object serves every request in this process. The
+    # analyze route writes context_data onto it per request, so two
+    # requests in flight at the same moment can see each other's
+    # context. I run this for one local user and I record the race here
+    # plainly. The cache lock below covers the cache only, not this.
     
     # Cache structure with thread safety
     cache_lock = threading.Lock()
@@ -339,6 +353,10 @@ def create_app(config_name='production'):
         
         # Validate file extension
         if '.' in filename:
+            # A name with no dot skips this check entirely and is served
+            # if the file exists. I accept that because the folder is
+            # fixed, send_from_directory guards the join, and every file
+            # under extension/ in this repo is mine to serve.
             ext = filename.rsplit('.', 1)[1].lower()
             if ext not in ['js', 'html', 'css', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'woff', 'woff2', 'json', 'glsl', 'wgsl', 'ttf', 'txt']:
                 return jsonify({'error': 'File type not allowed'}), 403
@@ -442,6 +460,13 @@ def create_app(config_name='production'):
             clear_expired_cache()
             
             # Check cache
+            # The cache key holds the URL and the profile name only.
+            # Context is not in the key. The session id check beside the
+            # lookup stops one session from reading a result decided
+            # under another session's context, but the same session with
+            # changed context and the same URL inside five minutes gets
+            # the older answer. I accept that for repeat visits to one
+            # page during one task.
             cache_key = f"{url}-{domain}"
             current_time = time.time()
             
@@ -594,6 +619,9 @@ def create_app(config_name='production'):
             
             logger.info(f"Read popup.html, size: {len(popup_html)}")
             
+            # The script I insert is only a load marker for my own iframe
+            # debugging. Its log line proves the server rewrote the page.
+            # It carries no state and the popup never reads it.
             # Insert fallback script just before the </body> tag
             original_len = len(popup_html)
             popup_html = popup_html.replace(
@@ -643,6 +671,10 @@ def create_app(config_name='production'):
             with open(ext_path('popup.js'), 'r') as f:
                 popup_js = f.read()
             
+            # The fallback store in the script below lives in page memory
+            # and starts empty on each load. It keeps the popup buttons
+            # working when the parent frame never answers. Nothing in it
+            # survives a reload, and I never treat it as real storage.
             # Add fallback for when message passing fails
             iframe_modifications = """
 // Iframe-specific modifications for Eclipse Shield
@@ -882,6 +914,10 @@ def create_app(config_name='production'):
             
             # Remove frame-ancestors restrictions for matrix animation
             response.headers['X-Frame-Options'] = 'ALLOWALL'
+            # The pop on the next line is the part that works. Setting
+            # ALLOWALL by itself changes nothing here, since this header
+            # has no such value that browsers honor. I keep both lines so
+            # the intent and the mechanism stay in one place.
             response.headers.pop('X-Frame-Options', None)  # Remove if exists
             
             return response

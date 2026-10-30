@@ -15,6 +15,9 @@ try:
     from security import InputValidator
 except ImportError:
     # Fallback if security module not available
+    # I keep this fallback small. It only has to stop the analyzer from
+    # crashing on a checkout where security.py is missing. It is not the
+    # real validator, and the secure app never relies on it.
     class InputValidator:
         @staticmethod
         def validate_url(url):
@@ -406,6 +409,12 @@ class ProductivityAnalyzer:
                         logger.warning(f"_is_allowed_platform - Non-string entry found in '{platform_type}' for domain '{domain}': {platform}")
                         continue
                     platform_lower = platform.lower()
+                    # I know substring matching is wide. A platform string
+                    # can match inside a longer hostname that is not that
+                    # platform. I accept it here because the platform lists
+                    # are mine in settings.json and I keep the entries
+                    # specific. A list I did not control would need exact
+                    # host checks instead of this.
                     # Check if the platform is a substring of the hostname OR the full URL
                     # This allows matching subdomains (e.g., classroom.google.com) or specific paths if needed
                     if platform_lower in hostname_lower or platform_lower in url_lower:
@@ -646,6 +655,10 @@ class ProductivityAnalyzer:
                 # If url_signals is a string, treat it as the search query directly
                 search_query = url_signals
             
+            # I weight a search query match at 0.5, in the block below,
+            # over a plain URL match at 0.3. The query holds words I typed
+            # for the task. The URL mostly holds the site's own naming, so
+            # it says less about what I am doing.
             # Check full URL (weight: 0.3)
             for term in context_terms:
                 if term in url_lower:
@@ -696,6 +709,10 @@ class ProductivityAnalyzer:
         hostname = hostname.lower() # Ensure lowercase
 
         # Prioritize more specific categories first
+        # The order of these checks is the rule, not a style choice.
+        # Education and documentation hosts are tested before the search
+        # engine line, and the Google line splits workspace hosts away
+        # from plain search. Moving a line changes answers.
         if any(term in hostname for term in ['.edu', '.ac.', 'school', 'learn', 'course', 'study', 'academic', 'khanacademy', 'coursera', 'udemy', 'blackboard', 'canvas', 'moodle']):
             return 'educational'
         if any(term in hostname for term in ['wiki', 'docs.', 'developer.', 'reference', 'stackexchange', 'stackoverflow', 'github.io', 'mdn.']):
@@ -753,6 +770,10 @@ class ProductivityAnalyzer:
             if current_time - t < timedelta(minutes=1)
         ]
         
+        # This limit lives on the analyzer object, in memory. It counts
+        # calls on this one instance only, so it stops a tight local loop.
+        # It is not a network defense. The Flask layer carries its own
+        # limiter for requests that arrive over HTTP.
         # Check if too many requests in the last minute
         if len(self._last_analysis_times) > 50:  # Max 50 requests per minute
             logger.warning(f"Rate limit exceeded for analyze_website")
@@ -774,6 +795,11 @@ class ProductivityAnalyzer:
 
         settings = self.settings["domains"][domain]
 
+        # I keep the order in this method fixed: allowed platforms, then
+        # blocked specifics, then blocked keywords, then context, then AI
+        # or the local fallback. A host that matches both an allowed
+        # platform and a blocked specific is allowed, because step 1
+        # returns before step 2 runs. That outcome is my choice.
         # --- 1. Check Explicitly Allowed Platforms ---
         if self._is_allowed_platform(url, domain):
             logger.info(f"analyze_website - ALLOWED: URL '{url}' matches an allowed platform for domain '{domain}'.")
