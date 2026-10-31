@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eclipse Shield: notes from the night watch</title>
+<meta name="description" content="Eclipse Shield, logged as a night watch book. I set a context, the extension and secure_app.py check each visit against my lists and rules first, and I say plainly what the extension reads.">
+<!-- pages-campaign site for Epsilon0xCell/Eclipse-Shield; source of truth: Eclipse-Shield-Website/ on the default branch -->
+<!-- I rebuilt this page as an observatory plate because that is how I think about this tool: I sit up, I watch what tries to cross, and I write down what I saw. The old left rail console is gone. This page is a logbook, and the eclipse at the top is its clock. -->
+<style>
+  /* I kept the ink blue dark enough that the page feels like a plate left out overnight. One warm colour does the marking, like a pencil I only use for entries that matter. */
+  :root{
+    --bg:#081426; --bg2:#0b1c33; --plate:#0e2440; --plate2:#102a4a;
+    --line:#2a4a73; --rule:#1d3a5f;
+    --ink:#e8eef7; --dim:#a9bcd6; --faint:#7f96b4;
+    --warm:#f2b25c; --warm2:#f7cf8a; --pale:#cfe0f2;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --serif:Georgia,"Times New Roman",Times,serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.65}
+  a{color:var(--warm2)}
+  a:focus-visible{outline:2px solid var(--warm);outline-offset:3px}
+  .wrap{max-width:980px;margin:0 auto;padding:0 24px 72px}
+  .cover{padding:52px 0 10px;text-align:left}
+  .watchline{font-family:var(--mono);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);display:flex;flex-wrap:wrap;gap:6px 22px;border-bottom:1px solid var(--rule);padding-bottom:14px}
+  .watchline b{color:var(--warm);font-weight:600}
+  h1{font-family:var(--serif);font-size:3rem;line-height:1.06;font-weight:700;letter-spacing:-.01em;margin-top:30px;max-width:16ch}
+  h1 .thin{display:block;font-size:1.45rem;font-weight:400;color:var(--dim);margin-top:12px;line-height:1.3}
+  .lede{margin-top:22px;max-width:66ch;color:#d3dfef;font-size:1.06rem}
+  .lede p{margin-bottom:12px}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+  .badges img{height:22px}
+  .brandrow{display:flex;align-items:center;gap:14px;margin-top:26px}
+  .brandrow img{width:54px;height:54px;object-fit:contain;background:var(--plate);border:1px solid var(--line);border-radius:10px;padding:6px}
+  .brandrow p{font-size:.9rem;color:var(--dim);max-width:52ch}
+  /* I drew this eclipse by hand in SVG, wobble and all, because I wanted the disc to look inked rather than rendered. The corona shimmer lives only on this hero figure, so it never moves behind words I am asking anyone to read. */
+  figure.plate{margin:36px 0 8px;background:radial-gradient(ellipse at 50% 42%,var(--plate2),var(--bg2) 72%);border:1px solid var(--line);border-radius:14px;padding:28px 22px 16px}
+  figure.plate svg{width:100%;height:auto;display:block;max-height:430px}
+  figure.plate figcaption{font-size:.88rem;color:var(--dim);padding:12px 6px 4px;border-top:1px solid var(--rule);margin-top:10px}
+  .corona{animation:coronaShimmer 7s ease-in-out infinite alternate}
+  @keyframes coronaShimmer{from{opacity:.5}to{opacity:.95}}
+  figure.banner{margin:22px 0 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--plate)}
+  figure.banner img{width:100%;display:block}
+  figure.banner figcaption{padding:11px 16px;font-size:.88rem;color:var(--dim)}
+  /* Each section is an observation entry in my log. I numbered them in reading order and ruled a line under the heading, the way I would rule a line under a night of watching before I started the next one. */
+  .entry{margin-top:56px;border-top:2px solid var(--line);padding-top:22px}
+  .entryhead{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+  .obsno{font-family:var(--mono);color:var(--warm);font-size:.86rem;letter-spacing:.12em}
+  .obsmeta{font-family:var(--mono);color:var(--faint);font-size:.76rem;letter-spacing:.08em;text-transform:uppercase}
+  h2{font-family:var(--serif);font-size:1.55rem;font-weight:700;line-height:1.2}
+  .entry p.body{color:#d3dfef;margin-top:13px;max-width:68ch}
+  /* My stepped path is drawn, not charted by a library. I wanted the precedence to read as stairs an observer climbs: my own lists first, at the top, and the fallback last, at the bottom, where it belongs. */
+  .stepsfig{margin-top:20px;background:var(--plate);border:1px solid var(--line);border-radius:12px;padding:20px 18px 10px}
+  .stepsfig svg{width:100%;height:auto;display:block}
+  .stepsfig figcaption{font-size:.88rem;color:var(--dim);padding:10px 4px 6px}
+  .step .box{fill:#14335c;stroke:var(--warm);stroke-width:1.6}
+  .step .num{font-family:var(--mono);fill:var(--warm);font-size:15px}
+  .step .lab{font-family:var(--sans);fill:var(--ink);font-size:15px;font-weight:650}
+  .step{transition:opacity .6s ease}
+  ol.precedence{margin:18px 0 0 22px;color:#d3dfef;max-width:68ch}
+  ol.precedence li{margin-bottom:9px}
+  ol.precedence b{color:var(--ink)}
+  figure.shot{margin-top:20px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--plate)}
+  figure.shot img{width:100%;display:block}
+  figure.shot figcaption{padding:12px 16px;font-size:.88rem;color:var(--dim)}
+  /* I grouped the repo drawings together as plates because that is what they are: drawings from Eclipse-Shield-Visuals, each captioned for what it actually shows, not for what I wish it showed. */
+  .plates{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+  .plates figure{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--plate)}
+  .plates figure img{width:100%;display:block}
+  .plates figcaption{padding:11px 14px;font-size:.86rem;color:var(--dim)}
+  .plates figure.wide{grid-column:1/-1}
+  .cmdblock{background:#050d1a;border:1px solid var(--line);border-radius:10px;padding:15px 18px;font-family:var(--mono);font-size:.84rem;line-height:1.55;overflow-x:auto;margin-top:16px;white-space:pre;color:#dbe7f5}
+  .cmdblock .lbl{color:var(--faint);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:8px;white-space:normal}
+  .note{font-size:.92rem;color:var(--dim);margin-top:12px;max-width:68ch}
+  .honest{background:var(--plate);border:1px solid var(--line);border-left:4px solid var(--warm);border-radius:10px;padding:19px 23px;margin-top:18px}
+  .honest p{color:#d3dfef;margin-bottom:11px;max-width:66ch}
+  .honest p:last-child{margin-bottom:0}
+  footer{margin-top:64px;border-top:1px solid var(--rule);padding-top:19px;color:var(--dim);font-size:.89rem;display:flex;flex-wrap:wrap;gap:6px 26px}
+  footer .colophon{flex-basis:100%;color:var(--faint);font-size:.84rem}
+  /* I let the entries arrive as I scroll, in reading order, because a logbook fills one entry at a time. If scripts are off, I leave every entry plain on the page, fully readable, because the words matter more than the arrival. */
+  .has-js .entry{opacity:0;transform:translateY(18px);transition:opacity .65s ease,transform .65s ease}
+  .has-js .entry.inview{opacity:1;transform:none}
+  .has-js .step{opacity:.22}
+  .has-js .step.lit{opacity:1}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+    .corona{animation:none;opacity:.85}
+    .has-js .entry{opacity:1;transform:none;transition:none}
+    .has-js .step{opacity:1;transition:none}
+    .step{transition:none}
+  }
+  @media (max-width:760px){
+    h1{font-size:2.25rem}
+    h1 .thin{font-size:1.18rem}
+    .plates{grid-template-columns:1fr}
+    .wrap{padding:0 18px 56px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="cover">
+    <div class="watchline"><span><b>Logbook</b> Eclipse Shield</span><span>Observer: Epsilon0xCell</span><span>Watch: the hours I meant to work</span></div>
+    <h1>Eclipse Shield <span class="thin">notes from the night watch</span></h1>
+    <div class="lede">
+      <p>I built Eclipse Shield for the hours when I sit down to do one thing and the open tabs argue for another. It is my focus tool: a Flask backend in secure_app.py, and a browser extension that asks that backend about each visit before the visit settles in.</p>
+      <p>I keep this page as a logbook rather than a pitch. Each entry below records one part of the tool as I have it: what it is, how a visit gets decided, what the extension does, how I run it, and where it stands when I am being plain about it.</p>
+    </div>
+    <div class="badges">
+      <img alt="GitHub stars for Eclipse Shield" src="https://img.shields.io/github/stars/Epsilon0xCell/Eclipse-Shield?style=flat-square&color=f2b25c&label=stars">
+      <img alt="GitHub forks of Eclipse Shield" src="https://img.shields.io/github/forks/Epsilon0xCell/Eclipse-Shield?style=flat-square&color=f2b25c&label=forks">
+      <img alt="Last commit to Eclipse Shield" src="https://img.shields.io/github/last-commit/Epsilon0xCell/Eclipse-Shield?style=flat-square&color=f2b25c&label=last%20commit">
+      <img alt="Top language in Eclipse Shield" src="https://img.shields.io/github/languages/top/Epsilon0xCell/Eclipse-Shield?style=flat-square&color=f2b25c">
+      <img alt="Size of the Eclipse Shield repository" src="https://img.shields.io/github/repo-size/Epsilon0xCell/Eclipse-Shield?style=flat-square&color=f2b25c&label=size">
+    </div>
+    <div class="brandrow">
+      <img src="https://raw.githubusercontent.com/Epsilon0xCell/Eclipse-Shield/main/logo.png" alt="The Eclipse Shield logo from the root of the repo">
+      <p>The mark at the left is logo.png, which sits at the root of my repo. I use the file as it is, small, next to the watch line where I would stamp a logbook cover.</p>
+    </div>
+  </header>
+  <!-- I put the star field in as individual SVG dots, placed by hand, so the sky behind the disc is this page's sky and not a stock photograph of somebody else's night. -->
+  <figure class="plate" aria-labelledby="platecap">
+    <svg viewBox="0 0 900 430" role="img" aria-label="A hand drawn eclipse: a dark disc with a warm corona, set in a field of small stars">
+      <g fill="#cfe0f2">
+        <circle cx="42" cy="38" r="1.6" opacity=".7"/><circle cx="118" cy="74" r="1.1" opacity=".45"/><circle cx="196" cy="30" r="1.4" opacity=".6"/><circle cx="268" cy="88" r="1" opacity=".4"/><circle cx="330" cy="40" r="1.7" opacity=".75"/><circle cx="402" cy="70" r="1" opacity=".4"/><circle cx="478" cy="28" r="1.3" opacity=".55"/><circle cx="548" cy="82" r="1.1" opacity=".45"/><circle cx="618" cy="36" r="1.6" opacity=".7"/><circle cx="690" cy="76" r="1" opacity=".4"/><circle cx="758" cy="30" r="1.4" opacity=".6"/><circle cx="836" cy="66" r="1.2" opacity=".5"/><circle cx="872" cy="128" r="1" opacity=".4"/><circle cx="798" cy="150" r="1.5" opacity=".6"/><circle cx="70" cy="140" r="1.2" opacity=".5"/><circle cx="150" cy="196" r="1" opacity=".4"/><circle cx="84" cy="262" r="1.5" opacity=".6"/><circle cx="176" cy="322" r="1.1" opacity=".45"/><circle cx="258" cy="366" r="1.4" opacity=".55"/><circle cx="352" cy="388" r="1" opacity=".4"/><circle cx="452" cy="360" r="1.6" opacity=".65"/><circle cx="540" cy="392" r="1.1" opacity=".45"/><circle cx="640" cy="356" r="1.4" opacity=".55"/><circle cx="724" cy="330" r="1" opacity=".4"/><circle cx="812" cy="286" r="1.5" opacity=".6"/><circle cx="858" cy="356" r="1.1" opacity=".45"/><circle cx="30" cy="330" r="1.2" opacity=".5"/><circle cx="706" cy="196" r="1" opacity=".35"/><circle cx="742" cy="252" r="1.2" opacity=".45"/>
+      </g>
+      <g class="corona" stroke="#f2b25c" fill="none" stroke-linecap="round">
+        <circle cx="450" cy="215" r="118" stroke-width="2" opacity=".55"/>
+        <circle cx="450" cy="215" r="132" stroke-width="1.3" opacity=".4"/>
+        <g stroke-width="2.4">
+          <path d="M450 66 L450 84"/><path d="M450 346 L450 364"/>
+          <path d="M301 215 L319 215"/><path d="M581 215 L599 215"/>
+          <path d="M345 110 L357 122"/><path d="M543 308 L555 320"/>
+          <path d="M555 110 L543 122"/><path d="M357 308 L345 320"/>
+        </g>
+        <g stroke-width="1.5" opacity=".7">
+          <path d="M398 76 L404 94"/><path d="M502 336 L496 354"/>
+          <path d="M312 268 L330 262"/><path d="M570 168 L588 162"/>
+        </g>
+      </g>
+      <circle cx="450" cy="215" r="104" fill="#050d1a" stroke="#f7cf8a" stroke-width="1.6"/>
+      <path d="M368 158 A 104 104 0 0 1 520 128" fill="none" stroke="#2a4a73" stroke-width="1.2" opacity=".8"/>
+      <text x="450" y="382" text-anchor="middle" font-family="Georgia,serif" font-size="15" fill="#a9bcd6">the eclipse is the clock of this page</text>
+    </svg>
+    <figcaption id="platecap">Plate one, drawn for this page in SVG: a dark disc, a warm corona, and a field of dots for stars. The corona moves here, on the figure, and nowhere behind the text.</figcaption>
+  </figure>
+  <figure class="banner">
+    <img src="https://raw.githubusercontent.com/Epsilon0xCell/Eclipse-Shield/main/banner.png" alt="The Eclipse Shield banner image from the root of the repo">
+    <figcaption>banner.png, from the root of the repo. I show it at the width of the logbook because it is the banner the project itself carries.</figcaption>
+  </figure>
+  <section class="entry" id="about">
+    <div class="entryhead"><span class="obsno">Observation 01</span><h2>What it is</h2><span class="obsmeta">Entry: the tool itself</span></div>
+    <p class="body">Eclipse Shield is a focus tool I wrote for my own desk. I set a context first, in plain words: what I am working on, and what counts as serving that work. Then, when I visit a site, the tool checks that visit against the context I set, instead of against a fixed list that cannot tell study from distraction.</p>
+    <p class="body">The moving parts are two. The backend is secure_app.py, a Python Flask service that serves on localhost:5000 and holds my lists, my category rules, and the deciding logic. The extension, in the extension folder of the repo, lives in the browser, watches the visit, and talks to the backend about it.</p>
+    <p class="body">That split is the whole shape of the project. The browser side sees the visit as it happens. The backend side decides, using rules I wrote and, only when I supply a key, an AI call. Entry two logs that decision order exactly as I run it.</p>
+  </section>
+  <section class="entry" id="decision">
+    <div class="entryhead"><span class="obsno">Observation 02</span><h2>How a visit gets decided</h2><span class="obsmeta">Entry: precedence, in order</span></div>
+    <p class="body">I gave the decision a fixed order, and the order is the point. My explicit lists outrank everything. A category rule comes next. The AI is asked only when no rule has settled the visit and only when I have supplied my own Gemini key. When I have supplied no key, the rules decide alone, and the tool says so rather than dressing that up.</p>
+    <!-- I drew these steps as a path that drops from one landing to the next, left to right, because precedence is a descent: once a step settles a visit, the ones below it never get asked. -->
+    <figure class="stepsfig" id="stepsfig">
+      <svg viewBox="0 0 900 330" role="img" aria-label="A stepped path with five landings, in order: allow list, block list, category rules, AI when a key is supplied, and rules only when no key is supplied">
+        <path d="M18 62 H178 V112 H348 V162 H518 V212 H688 V262 H882" fill="none" stroke="#2a4a73" stroke-width="2" stroke-dasharray="5 6"/>
+        <g class="step"><rect class="box" x="22" y="30" width="150" height="58" rx="8"/><text class="num" x="38" y="56">Step 1</text><text class="lab" x="38" y="78">Allow list</text></g>
+        <g class="step"><rect class="box" x="192" y="80" width="150" height="58" rx="8"/><text class="num" x="208" y="106">Step 2</text><text class="lab" x="208" y="128">Block list</text></g>
+        <g class="step"><rect class="box" x="362" y="130" width="150" height="58" rx="8"/><text class="num" x="378" y="156">Step 3</text><text class="lab" x="378" y="178">Category rules</text></g>
+        <g class="step"><rect class="box" x="532" y="180" width="150" height="58" rx="8"/><text class="num" x="548" y="206">Step 4</text><text class="lab" x="548" y="228">AI, when keyed</text></g>
+        <g class="step"><rect class="box" x="702" y="230" width="176" height="58" rx="8"/><text class="num" x="718" y="256">Step 5</text><text class="lab" x="718" y="278">Rules only, no key</text></g>
+      </svg>
+      <figcaption>My stepped path, drawn for this page. The steps light in order when this plate scrolls into view. With scripts off, or with reduced motion set, every step stays lit, because the order itself is the information.</figcaption>
+    </figure>
+    <ol class="precedence">
+      <li><b>Allow list.</b> If I put a site on my allow list, it loads. My explicit word settles it.</li>
+      <li><b>Block list.</b> If I put a site on my block list, it is blocked. Again, my explicit word settles it.</li>
+      <li><b>Category rules.</b> If a category rule matches the visit and my current context, that rule applies.</li>
+      <li><b>AI, when keyed.</b> If no rule matches and I have supplied my own Gemini key, the backend asks the AI, with my stated context and goals as the basis.</li>
+      <li><b>Rules only, when not keyed.</b> If no rule matches and I have supplied no key, the rules alone decide. The /health route reports this state as local-only.</li>
+    </ol>
+  </section>
+  <section class="entry" id="extension">
+    <div class="entryhead"><span class="obsno">Observation 03</span><h2>The extension</h2><span class="obsmeta">Entry: the browser side</span></div>
+    <p class="body">The extension is the part that sits with me in the browser. The repo carries its files in the extension folder, including popup.html and popup.js, background scripts for Chrome and Opera, manifest files for each, and the matrix-animation folder. It reports the visit to secure_app.py and acts on the answer it gets back.</p>
+    <p class="body">I have exactly one genuine screenshot of it in the repo, and I would rather show that one honestly than stage a set. It is the matrix animation screen, below. The drawings after it come from my Eclipse-Shield-Visuals folder, and I caption them as drawings, not as screens.</p>
+    <figure class="shot">
+      <img src="https://raw.githubusercontent.com/Epsilon0xCell/Eclipse-Shield/main/extension/matrix-animation/screenshot.png" alt="Screenshot of the Eclipse Shield extension matrix animation screen, from the repo">
+      <figcaption>The extension matrix animation screen, from extension/matrix-animation/screenshot.png in the repo. This is the only screenshot the project has, so it is the only screenshot on this page.</figcaption>
+    </figure>
+    <div class="plates">
+      <figure><img src="https://raw.githubusercontent.com/Epsilon0xCell/Eclipse-Shield/main/Eclipse-Shield-Visuals/architecture.png" alt="Hand drawn architecture diagram for Eclipse Shield, from Eclipse-Shield-Visuals"><figcaption>architecture.png, from Eclipse-Shield-Visuals: my drawing of how the parts of the project fit together.</figcaption></figure>
+      <figure><img src="https://raw.githubusercontent.com/Epsilon0xCell/Eclipse-Shield/main/Eclipse-Shield-Visuals/components.png" alt="Hand drawn components diagram for Eclipse Shield, from Eclipse-Shield-Visuals"><figcaption>components.png, from Eclipse-Shield-Visuals: my drawing of the components, piece by piece.</figcaption></figure>
+      <figure><img src="https://raw.githubusercontent.com/Epsilon0xCell/Eclipse-Shield/main/Eclipse-Shield-Visuals/flowchart.png" alt="Hand drawn flowchart for Eclipse Shield, from Eclipse-Shield-Visuals"><figcaption>flowchart.png, from Eclipse-Shield-Visuals: my drawing of the flow a visit takes through the tool.</figcaption></figure>
+      <figure><img src="https://raw.githubusercontent.com/Epsilon0xCell/Eclipse-Shield/main/Eclipse-Shield-Visuals/statistics.png" alt="Hand drawn statistics chart for Eclipse Shield, from Eclipse-Shield-Visuals"><figcaption>statistics.png, from Eclipse-Shield-Visuals: a chart drawing from the project folder. I present it as a drawing in the repo, not as measured results from a run of mine.</figcaption></figure>
+      <figure class="wide"><img src="https://raw.githubusercontent.com/Epsilon0xCell/Eclipse-Shield/main/Eclipse-Shield-Visuals/product-map.png" alt="Hand drawn product map for Eclipse Shield, from Eclipse-Shield-Visuals"><figcaption>product-map.png, from Eclipse-Shield-Visuals: my map of the product as I laid it out, shown wide because the drawing is wide.</figcaption></figure>
+      <figure class="wide"><img src="https://raw.githubusercontent.com/Epsilon0xCell/Eclipse-Shield/main/Eclipse-Shield-Visuals/schematic.png" alt="Hand drawn schematic sheet for Eclipse Shield, from Eclipse-Shield-Visuals"><figcaption>schematic.png, from Eclipse-Shield-Visuals: my schematic sheet for the project, drawn as a single sheet and shown wide because the sheet is wide.</figcaption></figure>
+    </div>
+  </section>
+  <section class="entry" id="run">
+    <div class="entryhead"><span class="obsno">Observation 04</span><h2>Run it</h2><span class="obsmeta">Entry: the documented way</span></div>
+    <p class="body">This is the documented way to run it, taken from the quick start in my README. I list it as documentation, not as a log of a run I captured for this page.</p>
+    <!-- I copied these commands line for line from the README quick start. If the README changes its commands, this block has to change with it, or the logbook is lying about the entry. -->
+    <div class="cmdblock"><span class="lbl">Documented run commands, from the README quick start</span>python3 -m venv venv &amp;&amp; source venv/bin/activate
+pip install -r requirements.txt -r requirements-secure.txt
+python3 secure_app.py
+curl http://localhost:5000/health</div>
+    <p class="body">The last command asks the /health route how the backend is configured. Below is that route itself, from secure_app.py, lines 332 to 340 at the head I built this page from. I show the code because the code is what decides the answer. I am not presenting an invented response as a captured run.</p>
+    <!-- I kept this excerpt short on purpose: nine lines, each short enough to read whole on a phone, with nothing clipped at the edge. The ai line is the honest core of this project, so I wanted it visible in full. -->
+    <div class="cmdblock"><span class="lbl">What the route returns, taken from the code: secure_app.py, lines 332 to 340</span>    @app.route('/health')
+    def health_check():
+        """Health check endpoint."""
+        return jsonify({
+            'status': 'healthy',
+            'timestamp': time.time(),
+            'version': '2.0.0',
+            'ai': 'configured' if analyzer.ai_available else 'local-only'
+        })</div>
+    <p class="note">Read from that code, the route returns JSON with a status, a timestamp, a version, and an ai field that reads configured when an analyzer with AI is available, and local-only when it is not. That is the shape the code defines, stated from the code.</p>
+  </section>
+  <section class="entry" id="standing">
+    <div class="entryhead"><span class="obsno">Observation 05</span><h2>Where it stands</h2><span class="obsmeta">Entry: the honest part</span></div>
+    <div class="honest">
+      <p>I will state plainly what the extension reads, because a tool that watches my browsing should not hide what it watches. The extension reads my browser history, up to 10,000 entries, my open tabs, and my bookmarks.</p>
+      <p>When I supply my own Gemini key, the extension and backend send browsing context to Google's Gemini API so the AI step in entry two can judge a visit against my stated context and goals. That context leaves my machine on that step. I know that, and I choose when to supply a key with that in mind.</p>
+      <p>Without a key, the tool runs local-only rules: my allow list, my block list, and my category rules, with no AI call. The /health route reports that state in its ai field, as the code in entry four shows.</p>
+      <p>This is a personal tool I built for my own focus. I keep the repo docs folder, with its nine files, as I wrote it, and I keep this site in Eclipse-Shield-Website, separate from that documentation.</p>
+    </div>
+  </section>
+  <footer>
+    <span>Built by Epsilon0xCell</span>
+    <span><a href="https://github.com/Epsilon0xCell/Eclipse-Shield">The Eclipse Shield repo</a></span>
+    <span><a href="https://github.com/Epsilon0xCell">github.com/Epsilon0xCell</a></span>
+    <span class="colophon">Colophon: I set this logbook in system serif and sans stacks on an ink blue plate, drew the eclipse and the stepped path as inline SVG, and used only images that live in the repo itself.</span>
+  </footer>
+</div>
+<script>
+  // I add the has-js class from here, at the end, so that anyone reading without scripts never sees a hidden entry or a dimmed step. The fallback is the page itself, complete.
+  document.documentElement.classList.add('has-js');
+  (function(){
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var entries = document.querySelectorAll('.entry');
+    var steps = document.querySelectorAll('#stepsfig .step');
+    function lightAll(){
+      entries.forEach(function(el){ el.classList.add('inview'); });
+      steps.forEach(function(el){ el.classList.add('lit'); });
+    }
+    if (reduce || !('IntersectionObserver' in window)) { lightAll(); return; }
+    // I reveal each entry as it arrives, in the order I wrote them, and I stagger the steps so the precedence order is visible as a sequence, not just stated as a list.
+    var entryObserver = new IntersectionObserver(function(list){
+      list.forEach(function(item){
+        if (item.isIntersecting) { item.target.classList.add('inview'); entryObserver.unobserve(item.target); }
+      });
+    }, {threshold: 0.12});
+    entries.forEach(function(el){ entryObserver.observe(el); });
+    var stepObserver = new IntersectionObserver(function(list){
+      list.forEach(function(item){
+        if (item.isIntersecting) {
+          steps.forEach(function(step, i){ setTimeout(function(){ step.classList.add('lit'); }, 260 * i); });
+          stepObserver.disconnect();
+        }
+      });
+    }, {threshold: 0.3});
+    var fig = document.getElementById('stepsfig');
+    if (fig && steps.length) { stepObserver.observe(fig); } else { lightAll(); }
+  })();
+</script>
+</body>
+</html>
