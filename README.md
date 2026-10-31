@@ -157,3 +157,11 @@ This project is licensed under the [Creative Commons Attribution-NonCommercial 4
 ---
 
 *Eclipse Shield - Stay focused, stay productive* 🎯
+
+---
+
+## Diagrams and maps
+
+I drew the system out in [Eclipse-Shield-Visuals](Eclipse-Shield-Visuals/): an architecture diagram, a component map, a flowchart of one navigation, and a product map, with the written product map, statistics with citations, and the roadmap in [VISUAL.md](Eclipse-Shield-Visuals/VISUAL.md). Every sheet also ships as a PNG photograph of the paper page beside its SVG.
+
+![Eclipse Shield architecture](Eclipse-Shield-Visuals/architecture.svg)
