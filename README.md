@@ -51,7 +51,7 @@ curl http://localhost:5000/health
 ### 🌐 Browser Integration
 - **Cross-Platform Extensions**: Chrome and Opera support
 - **Real-Time Communication**: Secure messaging between browser and backend
-- **Seamless Blocking**: Instant website filtering without page refreshes
+- **Smooth Blocking**: Instant website filtering without page refreshes
 
 ### 🔒 Enterprise Security
 - **OWASP Top 10 Compliance**: Complete security framework implementation
