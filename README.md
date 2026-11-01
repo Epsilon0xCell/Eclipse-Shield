@@ -1,8 +1,16 @@
+![Intro: dawn at the lighthouse, the lamp out and its glass flashing in the low sun, a ship far out, the cottage cat on the sill](intro-banner.png)
+
 # Eclipse Shield
 
 **AI-powered productivity analyzer that helps users stay focused by blocking unproductive websites and providing contextual task guidance.**
 
 Eclipse Shield uses artificial intelligence to understand your current work context and dynamically blocks distracting websites while asking intelligent questions to keep you on track with your goals.
+
+![Banner: night on the gallery, the logbook open with Eclipse-Shield inked as the heading of tonight's entry](banner.png)
+
+![Scene: the gallery at night, a lantern swaying, the ship's bell rocking, a feather drifting past](assets-scene.svg)
+
+![Heading plate: an open logbook with a rope knot at its left, a ruled line beneath](sep-heavy.svg)
 
 ---
 
@@ -19,6 +27,9 @@ Eclipse Shield uses artificial intelligence to understand your current work cont
 ---
 
 ## 🚀 Quick Start
+
+> **Log entry, margin slip.** Dated and initialled by the keeper: set the context in plain words first, then let each visit be judged against it, in the order the Security entry logs.
+
 
 **For macOS users (recommended):**
 
@@ -40,6 +51,8 @@ curl http://localhost:5000/health
 - [Production Deployment](docs/DEPLOYMENT.md)
 
 ---
+
+![Separator: a row of small signal flags strung on a line, fluttering in sequence](sep-heavy.svg)
 
 ## ✨ Features
 
@@ -86,6 +99,8 @@ curl http://localhost:5000/health
 See [System Requirements](docs/REQUIREMENTS.md) for detailed specifications.
 
 ---
+
+![Separator: three signal flags on a short line, centred](sep-light.svg)
 
 ## 🔒 Security
 
