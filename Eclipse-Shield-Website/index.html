@@ -6,21 +6,21 @@
 <title>Eclipse Shield: the corona holds the line</title>
 <meta name="description" content="Eclipse Shield, kept as a lighthouse keeper's logbook. A context set in plain words, a Flask backend in secure_app.py on localhost:5000, and a browser extension that asks the backend about each visit before the visit settles.">
 <style>
-@font-face{font-family:'Agdasima';src:url('fonts/Agdasima-Regular.ttf') format('truetype');font-weight:400}
-@font-face{font-family:'Agdasima';src:url('fonts/Agdasima-Bold.ttf') format('truetype');font-weight:700}
-@font-face{font-family:'Archivo';src:url('fonts/Archivo-Regular.ttf') format('truetype')}
+@font-face{font-family:'Reggae One';src:url('fonts/ReggaeOne-Regular.ttf') format('truetype');font-weight:400}
+@font-face{font-family:'M PLUS Rounded 1c';src:url('fonts/MPLUSRounded1c-Regular.ttf') format('truetype');font-weight:400}
+@font-face{font-family:'M PLUS Rounded 1c';src:url('fonts/MPLUSRounded1c-Bold.ttf') format('truetype');font-weight:700}
 :root{--slate:#16224a;--slate2:#101a3a;--ground:#0a1128;--glass:#ffd76a;--chalk:#f4f1de;--dim:#a8b2d8;--rope:#b97f16;--brass:#f0b429;--orange:#ff8c42}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--ground);color:var(--chalk);font-family:'Archivo',sans-serif;line-height:1.65}
+body{background:var(--ground);color:var(--chalk);font-family:'M PLUS Rounded 1c',sans-serif;line-height:1.65}
 .wrap{max-width:820px;margin:0 auto;padding:0 22px 70px}
-h1,h2{font-family:'Agdasima',sans-serif;letter-spacing:.01em}
+h1,h2{font-family:'Reggae One',sans-serif;letter-spacing:.01em}
 h1{font-size:3.2rem;line-height:1.02;margin-top:26px}
 h2{font-size:1.7rem;line-height:1.15}
 p{margin-top:12px;color:#e6e9f5;max-width:68ch}
 a{color:var(--chalk);text-decoration:none}
 a .lamp{display:inline-block;width:.72em;height:.72em;border:2px solid var(--glass);border-radius:50%;margin-right:.4em;vertical-align:-.05em}
 a:hover{color:var(--orange)} a:hover .lamp{background:#ffd76a;border-color:#ffd76a}
-.btn{display:inline-block;background:linear-gradient(180deg,#1c2a55,#16224a);color:var(--chalk);border:2px solid var(--rope);border-radius:6px;padding:.62em 1.15em;font-family:'Agdasima',sans-serif;font-size:1.05rem;box-shadow:inset 0 0 0 3px #101a3a;margin:.35em .3em 0 0}
+.btn{display:inline-block;background:linear-gradient(180deg,#1c2a55,#16224a);color:var(--chalk);border:2px solid var(--rope);border-radius:6px;padding:.62em 1.15em;font-family:'Reggae One',sans-serif;font-size:1.05rem;box-shadow:inset 0 0 0 3px #101a3a;margin:.35em .3em 0 0}
 .btn:hover{background:linear-gradient(180deg,#3d5494,#1c2a55);color:var(--chalk)}
 .btn:active{transform:translateY(3px)}
 .hero img{width:100%;display:block;border:3px solid var(--rope)}
@@ -31,12 +31,12 @@ figure{margin-top:20px} figcaption{font-size:.88rem;color:var(--dim);padding-top
 .entry{margin-top:40px}
 .entryhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #24356e;padding-bottom:9px}
 .bell{width:21px;height:21px;flex:none}
-.obsno{font-family:'Agdasima',sans-serif;color:var(--brass);font-size:1rem;letter-spacing:.1em;text-transform:uppercase}
+.obsno{font-family:'Reggae One',sans-serif;color:var(--brass);font-size:1rem;letter-spacing:.1em;text-transform:uppercase}
 .obsmeta{color:var(--dim);font-size:.8rem;text-transform:uppercase;letter-spacing:.08em}
 ol,ul{margin:14px 0 0 22px;max-width:68ch} li{margin-bottom:8px}
 .cmd{background:#05081a;border:1px solid #24356e;border-radius:8px;padding:14px 17px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;white-space:pre;overflow-x:auto;margin-top:15px}
 .slip{background:#0e1734;border-left:4px solid var(--brass);padding:15px 19px;margin-top:16px;font-size:.95rem}
-.slip .date{font-family:'Agdasima',sans-serif;color:var(--brass);letter-spacing:.08em;text-transform:uppercase;font-size:.82rem}
+.slip .date{font-family:'Reggae One',sans-serif;color:var(--brass);letter-spacing:.08em;text-transform:uppercase;font-size:.82rem}
 .plates{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
 .plates figure{border:1px solid #24356e;padding:8px;background:var(--slate2)} .plates img{width:100%;display:block}
 .shot{border:1px solid #24356e;padding:8px;background:var(--slate2)} .shot img{width:100%;display:block}
@@ -126,7 +126,7 @@ python3 -m pytest tests/ -q</div>
 <footer>
 <div class="rope" aria-hidden="true"></div>
 <p style="margin-top:18px">Built by Epsilon0xCell. <a href="https://github.com/Epsilon0xCell/Eclipse-Shield"><span class="lamp"></span>The Eclipse Shield repo</a> &nbsp; <a href="https://github.com/Epsilon0xCell"><span class="lamp"></span>github.com/Epsilon0xCell</a></p>
-<p>Colophon: this logbook is set in Agdasima (headings) and Archivo (body), both SIL Open Font License 1.1, self-hosted in the site fonts folder with their licence texts. Last Christmas was studied by hand for flyleaf capitals only and is never loaded by this page.</p>
+<p>Colophon: this logbook is set in Reggae One (headings) and M PLUS Rounded 1c (body), both SIL Open Font License 1.1, self-hosted in the site fonts folder with their licence texts. Last Christmas was studied by hand for flyleaf capitals only and is never loaded by this page.</p>
 </footer>
 </div>
 </body>
