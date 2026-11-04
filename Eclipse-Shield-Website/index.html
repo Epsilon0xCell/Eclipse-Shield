@@ -3,43 +3,43 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Eclipse Shield: the last keeper's log</title>
+<title>Eclipse Shield: the corona holds the line</title>
 <meta name="description" content="Eclipse Shield, kept as a lighthouse keeper's logbook. A context set in plain words, a Flask backend in secure_app.py on localhost:5000, and a browser extension that asks the backend about each visit before the visit settles.">
 <style>
 @font-face{font-family:'Agdasima';src:url('fonts/Agdasima-Regular.ttf') format('truetype');font-weight:400}
 @font-face{font-family:'Agdasima';src:url('fonts/Agdasima-Bold.ttf') format('truetype');font-weight:700}
 @font-face{font-family:'Archivo';src:url('fonts/Archivo-Regular.ttf') format('truetype')}
-:root{--slate:#2e3c4c;--slate2:#232f3e;--ground:#1b2634;--glass:#6eaa96;--chalk:#eef0e8;--dim:#b9c6cf;--rope:#96703c;--brass:#c69e4a;--orange:#e86e28}
+:root{--slate:#16224a;--slate2:#101a3a;--ground:#0a1128;--glass:#ffd76a;--chalk:#f4f1de;--dim:#a8b2d8;--rope:#b97f16;--brass:#f0b429;--orange:#ff8c42}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--ground);color:var(--chalk);font-family:'Archivo',sans-serif;line-height:1.65}
 .wrap{max-width:820px;margin:0 auto;padding:0 22px 70px}
 h1,h2{font-family:'Agdasima',sans-serif;letter-spacing:.01em}
 h1{font-size:3.2rem;line-height:1.02;margin-top:26px}
 h2{font-size:1.7rem;line-height:1.15}
-p{margin-top:12px;color:#dde4e2;max-width:68ch}
+p{margin-top:12px;color:#e6e9f5;max-width:68ch}
 a{color:var(--chalk);text-decoration:none}
 a .lamp{display:inline-block;width:.72em;height:.72em;border:2px solid var(--glass);border-radius:50%;margin-right:.4em;vertical-align:-.05em}
-a:hover{color:var(--orange)} a:hover .lamp{background:#ffc45e;border-color:#ffc45e}
-.btn{display:inline-block;background:linear-gradient(180deg,#37485c,#2e3c4c);color:var(--chalk);border:2px solid var(--rope);border-radius:6px;padding:.62em 1.15em;font-family:'Agdasima',sans-serif;font-size:1.05rem;box-shadow:inset 0 0 0 3px #232f3e;margin:.35em .3em 0 0}
-.btn:hover{background:linear-gradient(180deg,#55708c,#37485c);color:var(--chalk)}
+a:hover{color:var(--orange)} a:hover .lamp{background:#ffd76a;border-color:#ffd76a}
+.btn{display:inline-block;background:linear-gradient(180deg,#1c2a55,#16224a);color:var(--chalk);border:2px solid var(--rope);border-radius:6px;padding:.62em 1.15em;font-family:'Agdasima',sans-serif;font-size:1.05rem;box-shadow:inset 0 0 0 3px #101a3a;margin:.35em .3em 0 0}
+.btn:hover{background:linear-gradient(180deg,#3d5494,#1c2a55);color:var(--chalk)}
 .btn:active{transform:translateY(3px)}
 .hero img{width:100%;display:block;border:3px solid var(--rope)}
 figure{margin-top:20px} figcaption{font-size:.88rem;color:var(--dim);padding-top:8px}
 .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}.badges img{height:22px}
-.rope{height:10px;margin:44px 0 0;background:repeating-linear-gradient(45deg,var(--rope) 0 10px,#7a5a2c 10px 20px);border-radius:5px;position:relative}
+.rope{height:10px;margin:44px 0 0;background:repeating-linear-gradient(45deg,var(--rope) 0 10px,#8a6410 10px 20px);border-radius:5px;position:relative}
 .rope::after{content:'';position:absolute;left:50%;top:-5px;width:18px;height:18px;background:var(--ground);border:4px solid var(--rope);border-radius:50%}
 .entry{margin-top:40px}
-.entryhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #43536a;padding-bottom:9px}
+.entryhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #24356e;padding-bottom:9px}
 .bell{width:21px;height:21px;flex:none}
 .obsno{font-family:'Agdasima',sans-serif;color:var(--brass);font-size:1rem;letter-spacing:.1em;text-transform:uppercase}
 .obsmeta{color:var(--dim);font-size:.8rem;text-transform:uppercase;letter-spacing:.08em}
 ol,ul{margin:14px 0 0 22px;max-width:68ch} li{margin-bottom:8px}
-.cmd{background:#0d141d;border:1px solid #43536a;border-radius:8px;padding:14px 17px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;white-space:pre;overflow-x:auto;margin-top:15px}
-.slip{background:#263242;border-left:4px solid var(--brass);padding:15px 19px;margin-top:16px;font-size:.95rem}
+.cmd{background:#05081a;border:1px solid #24356e;border-radius:8px;padding:14px 17px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;white-space:pre;overflow-x:auto;margin-top:15px}
+.slip{background:#0e1734;border-left:4px solid var(--brass);padding:15px 19px;margin-top:16px;font-size:.95rem}
 .slip .date{font-family:'Agdasima',sans-serif;color:var(--brass);letter-spacing:.08em;text-transform:uppercase;font-size:.82rem}
 .plates{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
-.plates figure{border:1px solid #43536a;padding:8px;background:var(--slate2)} .plates img{width:100%;display:block}
-.shot{border:1px solid #43536a;padding:8px;background:var(--slate2)} .shot img{width:100%;display:block}
+.plates figure{border:1px solid #24356e;padding:8px;background:var(--slate2)} .plates img{width:100%;display:block}
+.shot{border:1px solid #24356e;padding:8px;background:var(--slate2)} .shot img{width:100%;display:block}
 footer{margin-top:56px;color:var(--dim);font-size:.9rem}
 @media(max-width:700px){h1{font-size:2.3rem}.plates{grid-template-columns:1fr}}
 </style>
@@ -47,7 +47,7 @@ footer{margin-top:56px;color:var(--dim);font-size:.9rem}
 <body>
 <div class="wrap">
 <header>
-<figure class="hero"><img src="themed-intro.png" alt="Dawn at the lighthouse: the tower, the keeper's cottage, a ship far out, and the lamp glass flashing in the low sun"></figure>
+<figure class="hero"><img src="themed-intro.png" alt="A worker at a desk at night under a giant eclipse shield, glowing app windows bouncing off its gold corona"></figure>
 <h1>Eclipse Shield</h1>
 <p>I built Eclipse Shield for the hours when I sit down to do one thing and the open tabs argue for another. It is my focus tool: a Flask backend in secure_app.py, and a browser extension that asks that backend about each visit before the visit settles in.</p>
 <p>I keep this page as a logbook rather than a pitch. Each entry below records one part of the tool as I have it: what it is, how a visit gets decided, what the extension does, how I run it, and where it stands when I am being plain about it.</p>
@@ -59,15 +59,15 @@ footer{margin-top:56px;color:var(--dim);font-size:.9rem}
 <img alt="Size of the Eclipse Shield repository" src="https://img.shields.io/github/repo-size/Epsilon0xCell/Eclipse-Shield?style=flat-square&color=c69e4a&label=size">
 </div>
 <p><a class="btn" href="https://github.com/Epsilon0xCell/Eclipse-Shield">Open the repo</a><a class="btn" href="#run">Run it</a><a class="btn" href="#standing">Where it stands</a></p>
-<figure><img src="themed-banner.png" alt="Night on the gallery: the logbook open on the deck, Eclipse-Shield inked as the heading of tonight's entry" style="width:100%"><figcaption>themed-banner: the naming picture for this build, the name written as the heading of the open page itself.</figcaption></figure>
+<figure><img src="themed-banner.png" alt="The eclipse shield at full span over a calm night desk, its corona turning distractions aside" style="width:100%"><figcaption>themed-banner: the naming picture for this build, the shield at full span over the desk it guards.</figcaption></figure>
 </header>
 <div class="rope" aria-hidden="true"></div>
-<section class="entry"><div class="entryhead"><svg class="bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-3.6 0-6 2.8-6 6.2 0 3.4-1.2 4.9-2.4 6.1h17.2C19.2 14.1 18 12.6 18 9.2 18 5.8 15.6 3 12 3z" fill="#c69e4a"/><circle cx="12" cy="19.6" r="2.1" fill="#c69e4a"/></svg><span class="obsno">Observation 01</span><h2>What it is</h2><span class="obsmeta">Entry: the tool itself</span></div>
+<section class="entry"><div class="entryhead"><svg class="bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-3.6 0-6 2.8-6 6.2 0 3.4-1.2 4.9-2.4 6.1h17.2C19.2 14.1 18 12.6 18 9.2 18 5.8 15.6 3 12 3z" fill="#f0b429"/><circle cx="12" cy="19.6" r="2.1" fill="#f0b429"/></svg><span class="obsno">Observation 01</span><h2>What it is</h2><span class="obsmeta">Entry: the tool itself</span></div>
 <p>Eclipse Shield is a focus tool I wrote for my own desk. I set a context first, in plain words: what I am working on, and what counts as serving that work. Then, when I visit a site, the tool checks that visit against the context I set, instead of against a fixed list that cannot tell study from distraction.</p>
 <p>The moving parts are two. The backend is secure_app.py, a Python Flask service that serves on localhost:5000 and holds my lists, my category rules, and the deciding logic. The extension, in the extension folder of the repo, lives in the browser (Chrome and Opera), watches the visit, and talks to the backend about it.</p>
 <p>That split is the whole shape of the project. The browser side sees the visit as it happens. The backend side decides, using rules I wrote and, only when I supply a key, an AI call. Entry two logs that decision order exactly as I run it.</p></section>
 <div class="rope" aria-hidden="true"></div>
-<section class="entry"><div class="entryhead"><svg class="bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-3.6 0-6 2.8-6 6.2 0 3.4-1.2 4.9-2.4 6.1h17.2C19.2 14.1 18 12.6 18 9.2 18 5.8 15.6 3 12 3z" fill="#c69e4a"/><circle cx="12" cy="19.6" r="2.1" fill="#c69e4a"/></svg><span class="obsno">Observation 02</span><h2>How a visit gets decided</h2><span class="obsmeta">Entry: precedence, in order</span></div>
+<section class="entry"><div class="entryhead"><svg class="bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-3.6 0-6 2.8-6 6.2 0 3.4-1.2 4.9-2.4 6.1h17.2C19.2 14.1 18 12.6 18 9.2 18 5.8 15.6 3 12 3z" fill="#f0b429"/><circle cx="12" cy="19.6" r="2.1" fill="#f0b429"/></svg><span class="obsno">Observation 02</span><h2>How a visit gets decided</h2><span class="obsmeta">Entry: precedence, in order</span></div>
 <p>I gave the decision a fixed order, and the order is the point. My explicit lists outrank everything. A category rule comes next. The AI is asked only when no rule has settled the visit and only when I have supplied my own Gemini key. When I have supplied no key, the rules decide alone, and the tool says so rather than dressing that up.</p>
 <ol>
 <li><b>Allow list.</b> If I put a site on my allow list, it loads. My explicit word settles it.</li>
@@ -77,7 +77,7 @@ footer{margin-top:56px;color:var(--dim);font-size:.9rem}
 <li><b>Rules only, when not keyed.</b> If no rule matches and I have supplied no key, the rules alone decide. The /health route reports this state as local-only, in its ai field.</li>
 </ol></section>
 <div class="rope" aria-hidden="true"></div>
-<section class="entry"><div class="entryhead"><svg class="bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-3.6 0-6 2.8-6 6.2 0 3.4-1.2 4.9-2.4 6.1h17.2C19.2 14.1 18 12.6 18 9.2 18 5.8 15.6 3 12 3z" fill="#c69e4a"/><circle cx="12" cy="19.6" r="2.1" fill="#c69e4a"/></svg><span class="obsno">Observation 03</span><h2>The extension</h2><span class="obsmeta">Entry: the browser side</span></div>
+<section class="entry"><div class="entryhead"><svg class="bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-3.6 0-6 2.8-6 6.2 0 3.4-1.2 4.9-2.4 6.1h17.2C19.2 14.1 18 12.6 18 9.2 18 5.8 15.6 3 12 3z" fill="#f0b429"/><circle cx="12" cy="19.6" r="2.1" fill="#f0b429"/></svg><span class="obsno">Observation 03</span><h2>The extension</h2><span class="obsmeta">Entry: the browser side</span></div>
 <p>The extension is the part that sits with me in the browser. The repo carries its files in the extension folder, including popup.html and popup.js, background scripts for Chrome and Opera, manifest files for each, and the matrix-animation folder. It reports the visit to secure_app.py and acts on the answer it gets back.</p>
 <p>I have exactly one genuine screenshot of it in the repo, and I would rather show that one honestly than stage a set. It is the matrix animation screen, below. The drawings after it come from my Eclipse-Shield-Visuals folder, and I caption them as drawings, not as screens.</p>
 <figure class="shot"><img src="https://raw.githubusercontent.com/Epsilon0xCell/Eclipse-Shield/main/extension/matrix-animation/screenshot.png" alt="Screenshot of the Eclipse Shield extension matrix animation screen, from the repo"><figcaption>The extension matrix animation screen, from extension/matrix-animation/screenshot.png in the repo. This is the only screenshot the project has, so it is the only screenshot on this page.</figcaption></figure>
@@ -90,7 +90,7 @@ footer{margin-top:56px;color:var(--dim);font-size:.9rem}
 <figure><img src="https://raw.githubusercontent.com/Epsilon0xCell/Eclipse-Shield/main/Eclipse-Shield-Visuals/schematic.png" alt="Hand drawn schematic sheet for Eclipse Shield"><figcaption>schematic.png, from Eclipse-Shield-Visuals: my schematic sheet for the project.</figcaption></figure>
 </div></section>
 <div class="rope" aria-hidden="true"></div>
-<section class="entry" id="run"><div class="entryhead"><svg class="bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-3.6 0-6 2.8-6 6.2 0 3.4-1.2 4.9-2.4 6.1h17.2C19.2 14.1 18 12.6 18 9.2 18 5.8 15.6 3 12 3z" fill="#c69e4a"/><circle cx="12" cy="19.6" r="2.1" fill="#c69e4a"/></svg><span class="obsno">Observation 04</span><h2>Quick Start</h2><span class="obsmeta">Entry: the documented way</span></div>
+<section class="entry" id="run"><div class="entryhead"><svg class="bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-3.6 0-6 2.8-6 6.2 0 3.4-1.2 4.9-2.4 6.1h17.2C19.2 14.1 18 12.6 18 9.2 18 5.8 15.6 3 12 3z" fill="#f0b429"/><circle cx="12" cy="19.6" r="2.1" fill="#f0b429"/></svg><span class="obsno">Observation 04</span><h2>Quick Start</h2><span class="obsmeta">Entry: the documented way</span></div>
 <p>For macOS, the route the README recommends: read <a href="https://github.com/Epsilon0xCell/Eclipse-Shield/blob/main/QUICKSTART.md"><span class="lamp"></span>QUICKSTART.md</a> and run the installer, <span style="font-family:ui-monospace,monospace">./install-local.sh</span>. On any platform, without Docker:</p>
 <div class="cmd">python3 -m venv venv &amp;&amp; source venv/bin/activate
 pip install -r requirements.txt -r requirements-secure.txt
@@ -100,7 +100,7 @@ curl http://localhost:5000/health</div>
 <p>More in the repo: <a href="https://github.com/Epsilon0xCell/Eclipse-Shield/blob/main/docs/INSTALLATION.md"><span class="lamp"></span>docs/INSTALLATION.md</a> and <a href="https://github.com/Epsilon0xCell/Eclipse-Shield/blob/main/docs/DEPLOYMENT.md"><span class="lamp"></span>docs/DEPLOYMENT.md</a>.</p>
 </section>
 <div class="rope" aria-hidden="true"></div>
-<section class="entry"><div class="entryhead"><svg class="bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-3.6 0-6 2.8-6 6.2 0 3.4-1.2 4.9-2.4 6.1h17.2C19.2 14.1 18 12.6 18 9.2 18 5.8 15.6 3 12 3z" fill="#c69e4a"/><circle cx="12" cy="19.6" r="2.1" fill="#c69e4a"/></svg><span class="obsno">Observation 05</span><h2>Requirements</h2><span class="obsmeta">Entry: what it needs</span></div>
+<section class="entry"><div class="entryhead"><svg class="bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-3.6 0-6 2.8-6 6.2 0 3.4-1.2 4.9-2.4 6.1h17.2C19.2 14.1 18 12.6 18 9.2 18 5.8 15.6 3 12 3z" fill="#f0b429"/><circle cx="12" cy="19.6" r="2.1" fill="#f0b429"/></svg><span class="obsno">Observation 05</span><h2>Requirements</h2><span class="obsmeta">Entry: what it needs</span></div>
 <ul>
 <li>Python 3.8 or newer</li>
 <li>A modern web browser: Chrome or Opera</li>
@@ -108,14 +108,14 @@ curl http://localhost:5000/health</div>
 <li>For production: Redis, Nginx, and Docker</li>
 </ul></section>
 <div class="rope" aria-hidden="true"></div>
-<section class="entry"><div class="entryhead"><svg class="bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-3.6 0-6 2.8-6 6.2 0 3.4-1.2 4.9-2.4 6.1h17.2C19.2 14.1 18 12.6 18 9.2 18 5.8 15.6 3 12 3z" fill="#c69e4a"/><circle cx="12" cy="19.6" r="2.1" fill="#c69e4a"/></svg><span class="obsno">Observation 06</span><h2>Security notes</h2><span class="obsmeta">Entry: locking down</span></div>
+<section class="entry"><div class="entryhead"><svg class="bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-3.6 0-6 2.8-6 6.2 0 3.4-1.2 4.9-2.4 6.1h17.2C19.2 14.1 18 12.6 18 9.2 18 5.8 15.6 3 12 3z" fill="#f0b429"/><circle cx="12" cy="19.6" r="2.1" fill="#f0b429"/></svg><span class="obsno">Observation 06</span><h2>Security notes</h2><span class="obsmeta">Entry: locking down</span></div>
 <p>The repo's security work covers input validation, rate limiting, API key handling, and CSRF protection. Two ways to check it:</p>
 <div class="cmd">python3 security_test.py http://localhost:5000
 python3 -m pytest tests/ -q</div>
 <div class="slip"><span class="date">Margin slip, keeper's hand</span><p style="margin-top:6px">security_test.py runs against a live server. The pytest suite needs no server and no API key.</p></div>
 </section>
 <div class="rope" aria-hidden="true"></div>
-<section class="entry" id="standing"><div class="entryhead"><svg class="bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-3.6 0-6 2.8-6 6.2 0 3.4-1.2 4.9-2.4 6.1h17.2C19.2 14.1 18 12.6 18 9.2 18 5.8 15.6 3 12 3z" fill="#c69e4a"/><circle cx="12" cy="19.6" r="2.1" fill="#c69e4a"/></svg><span class="obsno">Observation 07</span><h2>Where it stands</h2><span class="obsmeta">Entry: the honest part</span></div>
+<section class="entry" id="standing"><div class="entryhead"><svg class="bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c-3.6 0-6 2.8-6 6.2 0 3.4-1.2 4.9-2.4 6.1h17.2C19.2 14.1 18 12.6 18 9.2 18 5.8 15.6 3 12 3z" fill="#f0b429"/><circle cx="12" cy="19.6" r="2.1" fill="#f0b429"/></svg><span class="obsno">Observation 07</span><h2>Where it stands</h2><span class="obsmeta">Entry: the honest part</span></div>
 <div class="slip"><span class="date">Pasted slip, stated plainly</span>
 <p>I will state plainly what the extension reads, because a tool that watches my browsing should not hide what it watches. The extension reads my browser history, up to 10,000 entries, my open tabs, and my bookmarks.</p>
 <p>When I supply my own Gemini key, the extension and backend send browsing context to Google's Gemini API so the AI step in entry two can judge a visit against my stated context and goals. That context leaves my machine on that step. I know that, and I choose when to supply a key with that in mind.</p>

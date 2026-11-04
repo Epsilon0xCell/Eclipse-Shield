@@ -1,1 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 36"><line x1="480" y1="6" x2="720" y2="6" stroke="#96703c" stroke-width="2"/><g><animateTransform attributeName="transform" type="rotate" values="0 510 6;6 510 6;0 510 6" dur="1.8s" begin="0.00s" repeatCount="indefinite"/><path d="M510 6 h44 l-10 11 10 11 h-44 z" fill="#3a4858"/></g><g><animateTransform attributeName="transform" type="rotate" values="0 568 6;6 568 6;0 568 6" dur="1.8s" begin="0.18s" repeatCount="indefinite"/><path d="M568 6 h44 l-10 11 10 11 h-44 z" fill="#6eaa96"/></g><g><animateTransform attributeName="transform" type="rotate" values="0 626 6;6 626 6;0 626 6" dur="1.8s" begin="0.36s" repeatCount="indefinite"/><path d="M626 6 h44 l-10 11 10 11 h-44 z" fill="#eef0e8"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="16" viewBox="0 0 800 16">
+<line x1="60" y1="8" x2="740" y2="8" stroke="#3d5494" stroke-width="1.5"/>
+<rect x="392" y="2" width="12" height="12" transform="rotate(45 398 8)" fill="#f0b429"/>
+<rect x="352" y="4" width="8" height="8" transform="rotate(45 356 8)" fill="#ffd76a"/>
+<rect x="436" y="4" width="8" height="8" transform="rotate(45 440 8)" fill="#ffd76a"/>
+</svg>
