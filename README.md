@@ -1,17 +1,17 @@
-![Intro: a worker at a desk at night, the eclipse shield hanging in the sky above, its gold corona turning aside a rain of glowing app windows](intro-banner.png)
+![Banner: the eclipse shield at full span, distracting app windows bouncing off its corona while the desk below stays calm and lit](banner.png)
 
-<p align="center"><img src="logo.png" alt="Eclipse Shield logo: a black eclipse disc with a gold corona curving into a shield" width="200"></p>
-
-# Eclipse Shield
+# Eclipse Shield <img src="logo.png" alt="Eclipse Shield logo: a black eclipse disc with a gold corona curving into a shield" width="48">
 
 **The Corona Shield**
 _A black eclipse hangs over the desk, its gold corona bent into a shield, and every glowing distraction breaks against it and falls away._
 
 **AI-powered productivity analyzer that helps users stay focused by blocking unproductive websites and providing contextual task guidance.**
 
-Eclipse Shield uses artificial intelligence to understand your current work context and dynamically blocks distracting websites while asking intelligent questions to keep you on track with your goals.
+![macOS](https://img.shields.io/badge/macOS-10.15%2B-blue?style=flat-square)
+![License](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey?style=flat-square)
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=flat-square)
 
-![Banner: the eclipse shield at full span, distracting app windows bouncing off its corona while the desk below stays calm and lit](banner.png)
+Eclipse Shield uses artificial intelligence to understand your current work context and dynamically blocks distracting websites while asking intelligent questions to keep you on track with your goals.
 
 ![Scene: the corona shield, its rays pulsing while stray windows drift in and rebound](assets-scene.svg)
 
@@ -23,6 +23,7 @@ Eclipse Shield uses artificial intelligence to understand your current work cont
 
 - [🚀 Quick Start](#-quick-start)
 - [✨ Features](#-features)
+- [⚙️ Configuration](#️-configuration)
 - [🏗️ How It Works](#️-how-it-works)
 - [📋 Requirements](#-requirements)
 - [🔒 Security](#-security)
@@ -32,6 +33,9 @@ Eclipse Shield uses artificial intelligence to understand your current work cont
 ---
 
 ## 🚀 Quick Start
+
+> [!WARNING]
+> The browser extension asks Chrome or Opera for access to the sites you visit: `extension/manifest.json` lists host permissions for all URLs, plus the tabs and web navigation permissions. It needs that access so each visit can be sent to the Eclipse Shield backend running on your own machine at http://localhost:5000 and checked against your context and rules. Eclipse Shield does not ask macOS for Screen Recording or Accessibility permissions.
 
 > **Under the corona, in plain words.** Set the context in plain words first, then let each visit be judged against it, in the order the Security entry logs.
 
@@ -61,20 +65,26 @@ curl http://localhost:5000/health
 
 ## ✨ Features
 
-### 🧠 AI-Powered Analysis
-- **Contextual Understanding**: AI analyzes your current task and goals
-- **Smart Blocking**: Dynamic website filtering based on work context
-- **Adaptive Questions**: Intelligent prompts to maintain focus
+| Feature | What it does | Why it matters |
+|---|---|---|
+| Contextual Understanding | AI analyzes your current task and goals | Blocking decisions follow the work you are doing, not a fixed list alone |
+| Smart Blocking | Dynamic website filtering based on work context | Sites that fight your current context are filtered while you work |
+| Adaptive Questions | Intelligent prompts to maintain focus | The app checks your intent instead of guessing silently |
+| Cross-Platform Extensions | Chrome and Opera support | The same blocking works in either supported browser |
+| Real-Time Communication | Secure messaging between browser and backend | The extension and the local backend stay in step on every visit |
+| Smooth Blocking | Instant website filtering without page refreshes | A blocked site is stopped at once, without a reload cycle |
+| OWASP Top 10 Compliance | Complete security framework implementation | The backend is built against a known security checklist |
+| Multi-Layer Defense | Firewall, intrusion detection, and application security | More than one layer has to fail before the app is exposed |
+| Production Ready | Automated deployment with security hardening | The same setup can move from a laptop to a server |
 
-### 🌐 Browser Integration
-- **Cross-Platform Extensions**: Chrome and Opera support
-- **Real-Time Communication**: Secure messaging between browser and backend
-- **Smooth Blocking**: Instant website filtering without page refreshes
+---
 
-### 🔒 Enterprise Security
-- **OWASP Top 10 Compliance**: Complete security framework implementation
-- **Multi-Layer Defense**: Firewall, intrusion detection, and application security
-- **Production Ready**: Automated deployment with security hardening
+## ⚙️ Configuration
+
+- **Domain profiles (`settings.json`)**: Each profile (for example work or school) carries its own allowed platforms, `blocked_specific` sites, `blocked_keywords`, and blocked categories. Edit the profile that matches the context you are working in.
+- **API key (optional)**: Add a Google Gemini API key from [Google AI Studio](https://aistudio.google.com/) in `api_key.txt` or as the `GOOGLE_API_KEY` environment variable. The key enables AI decisions for sites that match no explicit rule.
+- **Without a key**: The analyzer runs in local rules-only mode: explicit allow and block lists, category rules, and context matching still work, and the `/health` endpoint reports `"ai": "local-only"`.
+- **Full guide**: See the [Configuration Guide](docs/CONFIGURATION.md) for the remaining settings.
 
 ---
 
@@ -179,6 +189,8 @@ This project is licensed under the [Creative Commons Attribution-NonCommercial 4
 *Eclipse Shield - Stay focused, stay productive* 🎯
 
 ---
+
+![Intro: a worker at a desk at night, the eclipse shield hanging in the sky above, its gold corona turning aside a rain of glowing app windows](intro-banner.png)
 
 ## Diagrams and maps
 
