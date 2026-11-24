@@ -11,6 +11,12 @@ _A black eclipse hangs over the desk, its gold corona bent into a shield, and ev
 ![License](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey?style=flat-square)
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=flat-square)
 
+<p align="center">
+  <a href="demo/eclipse-shield-demo.mp4"><img src="demo/eclipse-shield-demo.gif" width="800" alt="The Eclipse Shield demo playing: the extension side panel checking sites against the work profile, then the same site flipping from blocked to allowed when the profile switches to personal."></a>
+</p>
+
+<p align="center"><strong>Watch it work.</strong> The film above is Eclipse Shield running for real, every shot a live run of the backend and the extension. Click it to watch the <a href="demo/eclipse-shield-demo.mp4">full demo video</a> (112 seconds).</p>
+
 Eclipse Shield uses artificial intelligence to understand your current work context and dynamically blocks distracting websites while asking intelligent questions to keep you on track with your goals.
 
 ![Scene: the corona shield, its rays pulsing while stray windows drift in and rebound](assets-scene.svg)
@@ -21,6 +27,7 @@ Eclipse Shield uses artificial intelligence to understand your current work cont
 
 ## 🎩 Table of Contents
 
+- [🎬 Demo](#-demo)
 - [🚀 Quick Start](#-quick-start)
 - [✨ Features](#-features)
 - [⚙️ Configuration](#️-configuration)
@@ -29,6 +36,17 @@ Eclipse Shield uses artificial intelligence to understand your current work cont
 - [🔒 Security](#-security)
 - [📖 Documentation](#-documentation)
 - [🤝 Contributing](#-contributing)
+
+---
+
+## 🎬 Demo
+
+The GIF at the top of this README is the hero loop from the full demo: a site is checked against the **work** profile and blocked, the profile switches to **personal**, and the same site is allowed. The full video ([demo/eclipse-shield-demo.mp4](demo/eclipse-shield-demo.mp4), 112 seconds) shows the Flask backend starting in the terminal, the extension side panel checking allowed and blocked sites across profiles, and the test suite passing.
+
+- Every shot is a real run: no fake UI, no staged verdicts, no mock data.
+- The demo runs in **keyless mode** (no `GEMINI_API_KEY` set), so every verdict shown comes from the local rules in `settings.json`. Adding a key enables Gemini decisions for unlisted sites, as described in Quick Start.
+- The music in the full video is an original synthesized track made for this demo, so it carries no third-party licence.
+- Production notes, exact commands, and the shot list: [demo/SCRIPT.md](demo/SCRIPT.md).
 
 ---
 
