@@ -38,7 +38,7 @@ cd Eclipse-Shield
 ./install-local.sh
 
 # 3. Add your API key
-echo "your-google-gemini-api-key" > api_key.txt
+export GEMINI_API_KEY="your-key-from-google-ai-studio"
 
 # 4. Start Eclipse Shield
 ./start.sh
@@ -81,7 +81,7 @@ nano .env
 #### Step 5: Add API Key
 ```bash
 # Add your Google Gemini API key
-echo "your-api-key-here" > api_key.txt
+export GEMINI_API_KEY="your-key-from-google-ai-studio"
 ```
 
 #### Step 6: Start Application
@@ -114,7 +114,7 @@ cp .env.example .env
 nano .env
 
 # 4. Add API key
-echo "your-api-key-here" > api_key.txt
+export GEMINI_API_KEY="your-key-from-google-ai-studio"
 
 # 5. Start with Docker Compose
 docker-compose up -d
@@ -126,7 +126,7 @@ docker-compose up -d
 2. Sign in with your Google account
 3. Click "Get API Key"
 4. Create a new API key or use an existing one
-5. Copy the API key and add it to `api_key.txt`
+5. Copy the API key and set it as the `GEMINI_API_KEY` environment variable
 
 **Important**: Keep your API key secure and never commit it to version control.
 
@@ -174,7 +174,7 @@ chmod +x install-local.sh start.sh stop.sh
 
 ### API Key Issues
 - Verify your API key is valid at [Google AI Studio](https://aistudio.google.com/)
-- Check that `api_key.txt` contains only the key (no extra whitespace)
+- Check that `GEMINI_API_KEY` is set in the environment of the shell that starts the server
 - Ensure you have quota remaining on your API account
 
 ### Port Already in Use

@@ -10,8 +10,8 @@
 
 ### 2. Add Your API Key (optional)
 ```bash
-# Edit with your Google Generative AI API key
-nano api_key.txt
+# Set your Google Gemini API key in the environment (never in a repo file)
+export GEMINI_API_KEY="your-key-from-google-ai-studio"
 ```
 Without a key, Eclipse Shield runs in local rules-only mode: allow and block lists, category rules, and context matching still work. Check which mode is active at `http://localhost:5000/health` (the `ai` field).
 

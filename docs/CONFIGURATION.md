@@ -80,7 +80,7 @@ Configure productivity rules and website filtering:
     }
   },
   "global_settings": {
-    "ai_model": "gemini-2.0-flash",
+    "ai_model": "gemini-3.5-flash-lite",
     "question_frequency": "adaptive",
     "block_duration": 300,
     "learning_mode": true,
@@ -103,7 +103,7 @@ Configure productivity rules and website filtering:
 
 ### Global Settings
 
-- **`ai_model`**: Which AI model to use (gemini-2.0-flash, gemini-1.5-flash)
+- **`ai_model`**: Which AI model to use (gemini-3.5-flash-lite default, gemini-3.1-flash-lite fallback; set with the GEMINI_MODEL environment variable)
 - **`question_frequency`**: How often to ask context questions (`never`, `low`, `medium`, `high`, `adaptive`)
 - **`block_duration`**: Default block time in seconds when a site is blocked
 - **`learning_mode`**: Whether the AI should learn from your responses
@@ -295,7 +295,7 @@ python3 -m json.tool settings.json
 ```bash
 # Fix file permissions
 chmod 644 settings.json .env
-chmod 600 api_key.txt  # Keep API key secure
+chmod 600 .env  # If you keep the key in a local .env, keep it private and untracked
 ```
 
 ### Testing Changes

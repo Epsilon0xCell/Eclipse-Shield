@@ -44,7 +44,7 @@ Eclipse Shield uses artificial intelligence to understand your current work cont
 
 1. **Read the [QUICKSTART.md](QUICKSTART.md) guide** - Complete setup in 3 simple steps
 2. **Run the installer**: `./install-local.sh`
-3. **Optional: add a Google Gemini API key** from [Google AI Studio](https://aistudio.google.com/), either in `api_key.txt` or as the `GOOGLE_API_KEY` environment variable
+3. **Optional: add a Google Gemini API key** from [Google AI Studio](https://aistudio.google.com/), as the `GEMINI_API_KEY` environment variable (keys are read from the environment only, never from a file in the repo)
 
 **Without Docker, on any platform:**
 
@@ -82,7 +82,7 @@ curl http://localhost:5000/health
 ## ⚙️ Configuration
 
 - **Domain profiles (`settings.json`)**: Each profile (for example work or school) carries its own allowed platforms, `blocked_specific` sites, `blocked_keywords`, and blocked categories. Edit the profile that matches the context you are working in.
-- **API key (optional)**: Add a Google Gemini API key from [Google AI Studio](https://aistudio.google.com/) in `api_key.txt` or as the `GOOGLE_API_KEY` environment variable. The key enables AI decisions for sites that match no explicit rule.
+- **API key (optional)**: Add a Google Gemini API key from [Google AI Studio](https://aistudio.google.com/) as the `GEMINI_API_KEY` environment variable. The key enables AI decisions for sites that match no explicit rule.
 - **Without a key**: The analyzer runs in local rules-only mode: explicit allow and block lists, category rules, and context matching still work, and the `/health` endpoint reports `"ai": "local-only"`.
 - **Full guide**: See the [Configuration Guide](docs/CONFIGURATION.md) for the remaining settings.
 
@@ -96,6 +96,33 @@ curl http://localhost:5000/health
 4. **Dynamic Blocking**: Unproductive websites are blocked in real-time
 5. **Continuous Adaptation**: The system learns and improves its decisions over time
 6. **Flexible Configuration**: Customize rules and contexts for different work scenarios
+
+### The check endpoint
+
+The extension and the side panel decide through one contract:
+
+```
+POST /api/check
+{"url": "https://example.com/page", "profile": "work"}
+
+200 {"allowed": false, "reason": "...", "source": "keyless-default",
+     "profile": "work", "confidence": 0.5}
+```
+
+Decisions resolve in a fixed order: explicit allow and block lists
+(`source: "list"`), a cached Gemini verdict (`"cache"`), a live Gemini
+classification (`"gemini"`), then the deterministic local fallback
+(`"keyless-default"` with no key configured, `"ai-unavailable"` when a
+key exists but the call failed). A decidable request always returns
+200; only malformed input returns 400. The older `/analyze` endpoint
+keeps its `isProductive` shape and carries the same `source` field.
+
+### Side panel
+
+The Chrome side panel is the primary UI: it stays open while you
+navigate, shows backend health and mode, switches the active profile
+(Work, School, Personal), and displays the verdict and reason for the
+current tab. The toolbar popup remains the session and questions flow.
 
 ---
 

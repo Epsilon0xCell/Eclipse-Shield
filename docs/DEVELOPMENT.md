@@ -155,10 +155,10 @@ RELOAD_ON_CHANGE=true
 #### API Key Setup
 ```bash
 # Add your Google Gemini API key for development
-echo "your-development-google-gemini-api-key" > api_key.txt
+export GEMINI_API_KEY="your-development-key-from-google-ai-studio"
 
 # Secure the file
-chmod 600 api_key.txt
+chmod 600 .env  # only if you keep a local untracked .env
 ```
 
 ### 5. Pre-commit Hooks Setup

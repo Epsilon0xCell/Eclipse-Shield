@@ -351,7 +351,7 @@ class LocalSecurityTester:
         print("• Keep Docker containers updated")
         print("• Monitor logs: ./logs.sh")
         print("• Only access via localhost:5000")
-        print("• Keep API keys secure in api_key.txt")
+        print("• Keep API keys in environment variables only, never in repo files")
         print("• Run tests regularly: ./test.sh")
 
 def main():
