@@ -26,9 +26,9 @@ redis>=4.5.0                  # Session storage and rate limiting
 gunicorn>=21.0.0              # WSGI server
 
 # Original dependencies
+google-genai>=1.0
+pydantic>=2.0
 requests>=2.31.0
-google-generativeai>=0.3.0
-beautifulsoup4>=4.12.0
 psutil>=5.9.0
 
 # Development and testing

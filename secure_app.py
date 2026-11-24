@@ -26,6 +26,8 @@ from security import (
     secure_filename
 )
 
+_cleanup_thread_started = False
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -70,7 +72,7 @@ def create_app(config_name='production'):
     limiter = Limiter(
         key_func=get_remote_address,
         storage_uri=SecurityConfig.RATE_LIMIT_STORAGE_URL,
-        default_limits=[SecurityConfig.RATE_LIMIT_DEFAULT]
+        default_limits=[]
     )
     limiter.init_app(app)
     
@@ -172,11 +174,9 @@ def create_app(config_name='production'):
     
     # Initialize analyzer
     analyzer = ProductivityAnalyzer()
-    # One analyzer object serves every request in this process. The
-    # analyze route writes context_data onto it per request, so two
-    # requests in flight at the same moment can see each other's
-    # context. I run this for one local user and I record the race here
-    # plainly. The cache lock below covers the cache only, not this.
+    # One analyzer object serves every request in this process. Context
+    # is passed per call to analyze_website, so concurrent requests no
+    # longer share a mutable context_data attribute (the old race).
     
     # Cache structure with thread safety
     cache_lock = threading.Lock()
@@ -258,7 +258,7 @@ def create_app(config_name='production'):
                     # More permissive CSP for extensions - completely remove frame-ancestors
                     response.headers[header] = (
                         "default-src 'self' http://localhost:* http://127.0.0.1:* chrome-extension: moz-extension:; "
-                        "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* http://127.0.0.1:* chrome-extension: moz-extension:; "
+                        "script-src 'self' 'unsafe-inline' http://localhost:* http://127.0.0.1:* chrome-extension: moz-extension:; "
                         "style-src 'self' 'unsafe-inline' http://localhost:* http://127.0.0.1:* chrome-extension: moz-extension:; "
                         "img-src 'self' data: blob: http://localhost:* http://127.0.0.1:* chrome-extension: moz-extension:; "
                         "connect-src 'self' http://localhost:* http://127.0.0.1:* chrome-extension: moz-extension:; "
@@ -330,6 +330,7 @@ def create_app(config_name='production'):
             return jsonify({'error': 'Internal server error'}), 500
     
     @app.route('/health')
+    @limiter.exempt
     def health_check():
         """Health check endpoint."""
         return jsonify({
@@ -487,18 +488,25 @@ def create_app(config_name='production'):
                         if question and answer:
                             context_dict[question] = answer
             
-            # Set analyzer context
-            analyzer.context_data = context_dict
+            # Context is passed per call. Writing it onto the shared
+            # analyzer object (the old code) let two requests in flight
+            # at the same moment read each other's context.
             
             # Perform analysis
             try:
-                analysis_result = analyzer.analyze_website(url, domain)
+                analysis_result = analyzer.analyze_website(
+                    url, domain, context_data=context_dict)
                 
+                explanation = InputValidator.sanitize_string(
+                    analysis_result.get('explanation', ''), 500
+                )
                 result = {
                     'isProductive': bool(analysis_result.get('isProductive', False)),
-                    'explanation': InputValidator.sanitize_string(
-                        analysis_result.get('explanation', ''), 500
-                    ),
+                    'explanation': explanation,
+                    # Contract aliases used by the side panel and demo:
+                    'allowed': bool(analysis_result.get('isProductive', False)),
+                    'reason': explanation,
+                    'source': analysis_result.get('source', 'local-rules'),
                     'confidence': max(0.0, min(1.0, float(analysis_result.get('confidence', 0.5)))),
                     'timestamp': current_time
                 }
@@ -523,6 +531,50 @@ def create_app(config_name='production'):
             logger.error(f"Request processing error: {e}")
             return jsonify({'error': 'Request processing failed'}), 500
     
+    @app.route('/api/check', methods=['POST'])
+    @limiter.limit(SecurityConfig.RATE_LIMIT_STRICT)
+    @validate_request_data(['url'])
+    def api_check(data):
+        """Check one URL against a profile: {url, profile|domain}.
+
+        Contract: a decidable request always returns 200 with
+        {allowed, reason, source, profile, confidence}. AI failure
+        degrades inside the analyzer to the keyless or ai-unavailable
+        fallback, never a 500. Only malformed input is a 400.
+        """
+        url = (data.get('url') or '').strip()
+        profile = (data.get('profile') or data.get('domain') or '').strip()
+        if not InputValidator.validate_url(url):
+            security_middleware.record_failed_attempt(get_remote_address())
+            return jsonify({'error': 'Invalid URL format'}), 400
+        if profile not in analyzer.settings.get('domains', {}):
+            security_middleware.record_failed_attempt(get_remote_address())
+            return jsonify({'error': f'Unknown profile: {profile}'}), 400
+        context = data.get('context', [])
+        context_dict = {}
+        if isinstance(context, list):
+            for qa in context[:10]:
+                if isinstance(qa, dict):
+                    q = InputValidator.sanitize_string(qa.get('question', ''), 500)
+                    a = InputValidator.sanitize_string(qa.get('answer', ''), 1000)
+                    if q and a:
+                        context_dict[q] = a
+        elif isinstance(context, dict):
+            context_dict = {
+                InputValidator.sanitize_string(str(k), 200):
+                    InputValidator.sanitize_string(str(v), 500)
+                for k, v in list(context.items())[:5]
+            }
+        result = analyzer.analyze_website(url, profile, context_data=context_dict)
+        reason = InputValidator.sanitize_string(result.get('explanation', ''), 500)
+        return jsonify({
+            'allowed': bool(result.get('isProductive', False)),
+            'reason': reason,
+            'source': result.get('source', 'local-rules'),
+            'profile': profile,
+            'confidence': max(0.0, min(1.0, float(result.get('confidence', 0.5)))),
+        })
+
     @app.route('/get_question', methods=['POST'])
     @limiter.limit(SecurityConfig.RATE_LIMIT_STRICT)
     @validate_request_data(['domain'])
@@ -1097,9 +1149,14 @@ def create_app(config_name='production'):
             except Exception as e:
                 logger.error(f"Cleanup task error: {e}")
     
-    # Start cleanup thread
-    cleanup_thread = threading.Thread(target=cleanup_task, daemon=True)
-    cleanup_thread.start()
+    # Start the cleanup thread once per process. create_app() runs once
+    # per test in the suite, and the old code stacked one immortal
+    # cleanup thread per call.
+    global _cleanup_thread_started
+    if not _cleanup_thread_started:
+        _cleanup_thread_started = True
+        cleanup_thread = threading.Thread(target=cleanup_task, daemon=True)
+        cleanup_thread.start()
     
     logger.info("Secure Eclipse Shield application initialized")
     return app
@@ -1113,4 +1170,4 @@ if __name__ == '__main__':
     print("🔒 Security features: ENABLED")
     print("📊 Monitoring: Active")
     print("")
-    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
+    app.run(host='127.0.0.1', port=5000, debug=False, threaded=True)

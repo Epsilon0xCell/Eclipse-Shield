@@ -1,10 +1,9 @@
 import os
 import json
-import requests
-import google.generativeai as genai
+import time
+import random
 from typing import Dict, List, Optional # Added Optional
-from bs4 import BeautifulSoup
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote
 import logging
 import re
 import html
@@ -73,11 +72,13 @@ def _is_real_api_key(value) -> bool:
 
 
 def load_api_key() -> Optional[str]:
-    """Load the Gemini API key from the environment or api_key.txt.
+    """Load the Gemini API key from the environment only.
 
     Resolution order: GOOGLE_API_KEY, GEMINI_API_KEY, API_KEY,
-    ECLIPSE_GEMINI_API_KEY, then api_key.txt located next to this module
-    (never relative to the process working directory).
+    ECLIPSE_GEMINI_API_KEY. Keys are never read from a file in the repo:
+    a committed api_key.txt shipped with this project for years (it held
+    only a placeholder, but the pattern invites pasting a real key into
+    a tracked file), so the file fallback was removed entirely.
 
     Returns None when no real key is configured. A missing key is not an
     error: the analyzer then runs in local rules-only mode. Placeholder
@@ -89,18 +90,49 @@ def load_api_key() -> Optional[str]:
             logger.debug(f"load_api_key - API key loaded from ${env_var}")
             return value.strip()
 
-    key_file = os.getenv("ECLIPSE_API_KEY_FILE") or os.path.join(BASE_DIR, "api_key.txt")
-    try:
-        with open(key_file, "r") as f:
-            value = f.read().strip()
-        if _is_real_api_key(value):
-            logger.debug("load_api_key - API key loaded from api_key.txt")
-            return value
-        logger.warning("load_api_key - api_key.txt holds a placeholder or empty value; treating as not configured")
-    except FileNotFoundError:
-        logger.warning("load_api_key - No API key in environment or api_key.txt; AI features disabled")
-
+    logger.warning("load_api_key - No API key in environment; AI features disabled")
     return None
+
+
+# Default and fallback Gemini models. The primary is the current
+# Flash-Lite Google names for new projects; the fallback is the cheaper
+# previous Flash-Lite if the primary is unavailable on the project.
+DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite"
+FALLBACK_GEMINI_MODEL = "gemini-3.1-flash-lite"
+GEMINI_TIMEOUT_MS = 8000
+GEMINI_MAX_RETRIES = 2
+
+
+def host_matches_entry(hostname: str, entry: str) -> bool:
+    """Match a hostname against one settings entry on host boundaries.
+
+    Entries come in two shapes in settings.json:
+    - Full hosts ("youtube.com", "classroom.google.com"): match the host
+      itself or a true subdomain (host == entry, or host ends with
+      "." + entry). "notyoutube.com" and "youtube.com.evil.com" never
+      match "youtube.com".
+    - Bare tokens ("notion", "canvas", "slack"): match one whole DNS
+      label, so "evilnotion.com" never matches "notion" but
+      "canvas.instructure.com" still matches "canvas".
+
+    The previous implementation used substring matching against the
+    hostname and the full URL, so evilnotion.com, notion.evil.com and
+    even example.com/?next=notion were all treated as the allowed
+    platform. Only the hostname is ever consulted here.
+    """
+    if not hostname or not entry:
+        return False
+    host = hostname.rstrip('.').lower()
+    item = entry.strip().lower().rstrip('.')
+    if not item:
+        return False
+    if '://' in item:
+        item = urlparse(item).hostname or item
+    if '.' in item:
+        return host == item or host.endswith('.' + item)
+    labels = host.split('.')
+    token = item.replace('_', '-')
+    return any(label == item or label == token for label in labels)
 
 def load_domain_settings(settings_path: Optional[str] = None) -> Dict:
     """Load domain settings from settings.json.
@@ -160,22 +192,35 @@ class ProductivityAnalyzer:
         self.ai_available = False
         self.api_key = api_key if api_key is not None else load_api_key()
 
+        self._client = None
+        self.model_name = os.getenv("GEMINI_MODEL", DEFAULT_GEMINI_MODEL)
+        # Cache of AI verdicts keyed by (profile, hostname). List and
+        # local-rule decisions are cheap and follow settings edits, so
+        # only Gemini verdicts are cached here.
+        self._verdict_cache = {}
+        self._verdict_cache_ttl = 300
+
         if model is not None:
             # Injected model (used by tests with a clearly labeled fixture).
             self.model = model
             self.ai_available = True
         elif self.api_key:
             try:
-                genai.configure(api_key=self.api_key)
-                model_name = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
-                self.model = genai.GenerativeModel(model_name)
+                # Current SDK: google-genai. The old google-generativeai
+                # package is deprecated and unmaintained, and the model
+                # it defaulted to (gemini-2.0-flash) is retired for new
+                # projects.
+                from google import genai as genai_client_module
+                self._client = genai_client_module.Client(api_key=self.api_key)
+                self.model = self._client
                 self.ai_available = True
-                logger.debug("ProductivityAnalyzer.__init__ - Google Generative AI configured and model created.")
+                logger.debug("ProductivityAnalyzer.__init__ - google-genai client created.")
             except Exception as e:
                 # AI setup failure must not take down the whole analyzer:
                 # explicit allow/block rules and local fallbacks still work.
                 logger.error(f"ProductivityAnalyzer.__init__ - AI setup failed, continuing in local rules-only mode: {e}")
                 self.model = None
+                self._client = None
                 self.ai_available = False
         else:
             logger.warning("ProductivityAnalyzer.__init__ - No Gemini API key configured; running in local rules-only mode")
@@ -184,20 +229,117 @@ class ProductivityAnalyzer:
         logger.debug(f"ProductivityAnalyzer.__init__ - Analyzer initialized (ai_available={self.ai_available}).")
         logger.debug("ProductivityAnalyzer.__init__ - END")
 
+    @staticmethod
+    def _is_retryable_error(exc: Exception) -> bool:
+        """Retry only transient failures: 429, 408 and 5xx."""
+        code = getattr(exc, 'code', None) or getattr(exc, 'status_code', None)
+        if isinstance(code, int):
+            return code in (408, 429) or 500 <= code < 600
+        name = type(exc).__name__.lower()
+        return any(tag in name for tag in ('timeout', 'deadline', 'unavailable'))
+
+    def _client_generate(self, contents, config=None):
+        """One generate_content call on the real google-genai client.
+
+        Applies the 8 second timeout and the retry policy (max 2 retries,
+        backoff with jitter, transient errors only). If the configured
+        model is unavailable on this project, falls back once to the
+        fallback Flash-Lite model.
+        """
+        from google.genai import types
+        # Verified against google-genai 3.6.1: generate_content takes
+        # only (model, contents, config); the timeout rides inside the
+        # config as http_options (milliseconds).
+        if config is None:
+            config = types.GenerateContentConfig()
+        try:
+            config.http_options = types.HttpOptions(timeout=GEMINI_TIMEOUT_MS)
+        except Exception:
+            pass
+        models_to_try = [self.model_name]
+        if self.model_name != FALLBACK_GEMINI_MODEL:
+            models_to_try.append(FALLBACK_GEMINI_MODEL)
+        last_exc = None
+        for index, model_name in enumerate(models_to_try):
+            for attempt in range(GEMINI_MAX_RETRIES + 1):
+                try:
+                    return self._client.models.generate_content(
+                        model=model_name, contents=contents, config=config)
+                except Exception as exc:
+                    last_exc = exc
+                    code = getattr(exc, 'code', None) or getattr(exc, 'status_code', None)
+                    if code == 404 and index + 1 < len(models_to_try):
+                        break  # Model unavailable here: try the fallback model.
+                    if self._is_retryable_error(exc) and attempt < GEMINI_MAX_RETRIES:
+                        time.sleep((2 ** attempt) + random.uniform(0, 0.25))
+                        continue
+                    raise
+        raise last_exc if last_exc else RuntimeError("AI call failed")
+
     def _generate_text(self, prompt: str) -> str:
         """Generate text with the configured model, with a hard timeout."""
         if self.model is None:
             raise RuntimeError("AI model is not configured")
-        try:
-            response = self.model.generate_content(
-                prompt, request_options={'timeout': 20}
-            )
-        except TypeError:
-            # Fixture models and older SDKs may not accept request_options.
-            response = self.model.generate_content(prompt)
+        if self._client is not None:
+            response = self._client_generate(prompt)
+        else:
+            # Injected fixture model seam (tests): old-style signature.
+            try:
+                response = self.model.generate_content(
+                    prompt, request_options={'timeout': 8}
+                )
+            except TypeError:
+                response = self.model.generate_content(prompt)
         if not hasattr(response, 'text'):
             raise ValueError("Invalid response format from AI.")
         return response.text.strip()
+
+    def _classify_with_gemini(self, url: str, domain: str,
+                              url_signals: dict, context_summary: str):
+        """Structured Gemini classification for one unlisted site.
+
+        Returns {'isProductive': bool, 'explanation': str,
+        'confidence': float} or None when no structured verdict could
+        be obtained (caller then uses the local fallback). Only the
+        hostname, category and profile are sent, never page bodies.
+        """
+        if self._client is None:
+            return None
+        try:
+            from google.genai import types
+            from pydantic import BaseModel
+
+            class Verdict(BaseModel):
+                allowed: bool
+                category: str
+                reason: str
+                confidence: float
+
+            host = url_signals.get('hostname') or urlparse(url).hostname or ''
+            prompt = (
+                f"Profile={domain}. Decide if this site fits the profile. "
+                f"Hostname={host} Category={url_signals.get('domain_type', 'general')} "
+                f"Task context: {context_summary[:500]}"
+            )
+            response = self._client_generate(
+                prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=Verdict,
+                    temperature=0,
+                    max_output_tokens=128,
+                ),
+            )
+            verdict = Verdict.model_validate_json(response.text)
+            return {
+                'isProductive': bool(verdict.allowed),
+                'explanation': verdict.reason.strip()[:140],
+                'confidence': max(0.0, min(1.0, float(verdict.confidence))),
+                'category': verdict.category,
+            }
+        except Exception as exc:
+            logger.error(f"_classify_with_gemini failed, local fallback applies: {exc}")
+            return None
 
     @staticmethod
     def _normalize_context(context) -> List[Dict]:
@@ -234,6 +376,12 @@ class ProductivityAnalyzer:
         Built only from signals this module already computes locally:
         the categorized hostname, search state, and context relevance.
         """
+        result = self._local_fallback_decision_inner(url, url_signals, context_relevance)
+        result['source'] = 'ai-unavailable' if self.ai_available else 'keyless-default'
+        return result
+
+    def _local_fallback_decision_inner(self, url: str, url_signals: dict,
+                                       context_relevance: dict) -> dict:
         category = url_signals.get('domain_type', 'general')
 
         if context_relevance.get('score', 0.0) >= 0.5:
@@ -412,15 +560,12 @@ class ProductivityAnalyzer:
                         logger.warning(f"_is_allowed_platform - Non-string entry found in '{platform_type}' for domain '{domain}': {platform}")
                         continue
                     platform_lower = platform.lower()
-                    # I know substring matching is wide. A platform string
-                    # can match inside a longer hostname that is not that
-                    # platform. I accept it here because the platform lists
-                    # are mine in settings.json and I keep the entries
-                    # specific. A list I did not control would need exact
-                    # host checks instead of this.
-                    # Check if the platform is a substring of the hostname OR the full URL
-                    # This allows matching subdomains (e.g., classroom.google.com) or specific paths if needed
-                    if platform_lower in hostname_lower or platform_lower in url_lower:
+                    # Host boundary matching only (see host_matches_entry).
+                    # The old code substring matched the hostname AND the
+                    # full URL, so evilnotion.com and example.com/?next=notion
+                    # counted as the allowed platform. Paths and queries
+                    # are never consulted for platform identity.
+                    if host_matches_entry(hostname_lower, platform_lower):
                         logger.info(f"_is_allowed_platform - Platform match in {domain} domain - Type: {platform_type}, Platform: {platform} for URL {url}")
                         return True
 
@@ -501,8 +646,8 @@ class ProductivityAnalyzer:
              if isinstance(blocked_specific, list):
                  for blocked in blocked_specific:
                       if not isinstance(blocked, str): continue # Skip non-string entries
-                      # Simple endswith check for domains, or exact match for full URLs
-                      if base_domain.endswith(blocked.lower()) or url.lower() == blocked.lower():
+                      # Host boundary match, or exact full URL match.
+                      if host_matches_entry(base_domain, blocked) or url.lower() == blocked.lower():
                           logger.debug(f"ProductivityAnalyzer._is_productive_domain - Blocked specific rule '{blocked}' match. Returning False")
                           return False
              else:
@@ -562,7 +707,7 @@ class ProductivityAnalyzer:
                     key, value = param.split('=', 1)
                     if key in ['q', 'query', 'search', 's', 'k', 'keyword']:
                          try:
-                              signals['search_query'] = requests.utils.unquote(value) # Decode URL encoding
+                              signals['search_query'] = unquote(value) # Decode URL encoding
                          except Exception as decode_err:
                               logger.warning(f"_analyze_url_components - Error decoding search query param '{value}': {decode_err}")
                               signals['search_query'] = value # Use raw value if decoding fails
@@ -599,7 +744,7 @@ class ProductivityAnalyzer:
             signals['error'] = str(e)
             return signals
 
-    def _check_context_relevance(self, url: str, url_signals=None) -> dict:
+    def _check_context_relevance(self, url: str, url_signals=None, context_data=None) -> dict:
         """Check relevance of URL and its signals against stored context data.
         
         Args:
@@ -616,15 +761,16 @@ class ProductivityAnalyzer:
         }
         logger.debug(f"_check_context_relevance - START - URL: {url}")
 
-        if not self.context_data:
+        effective_context = context_data if context_data is not None else self.context_data
+        if not effective_context:
             logger.warning("_check_context_relevance - No context data available for analysis.")
             return relevance # Return default zero score if no context
 
         try:
             # --- Prepare context terms ---
             context_terms_set = set()
-            logger.debug(f"_check_context_relevance - Processing context data: {self.context_data}")
-            for question, answer in self.context_data.items():
+            logger.debug(f"_check_context_relevance - Processing context data: {effective_context}")
+            for question, answer in effective_context.items():
                 if isinstance(answer, str) and answer.strip():
                     # Clean and split into words, remove punctuation, lowercase
                     words = [word.strip('.,?!();:"\'').lower() for word in answer.split()]
@@ -742,7 +888,7 @@ class ProductivityAnalyzer:
         # Default if no specific category matches
         return 'general'
 
-    def analyze_website(self, url: str, domain: str) -> dict: # Return dict now
+    def analyze_website(self, url: str, domain: str, context_data: Optional[Dict] = None) -> dict:
         """Analyze if a website is productive based on domain settings, context, and AI.
 
         Returns:
@@ -806,17 +952,19 @@ class ProductivityAnalyzer:
         # --- 1. Check Explicitly Allowed Platforms ---
         if self._is_allowed_platform(url, domain):
             logger.info(f"analyze_website - ALLOWED: URL '{url}' matches an allowed platform for domain '{domain}'.")
-            return {'isProductive': True, 'explanation': f"Allowed platform for '{domain}' domain."}
+            return {'isProductive': True, 'explanation': f"Allowed platform for '{domain}' domain.", 'source': 'list'}
 
         # --- 2. Check Explicitly Blocked Specific URLs/Domains ---
         blocked_specific = settings.get("blocked_specific", [])
         if isinstance(blocked_specific, list):
             for blocked in blocked_specific:
                 if not isinstance(blocked, str): continue
-                # Check if the blocked rule matches the base domain or the full URL
-                if base_domain.endswith(blocked.lower()) or url.lower() == blocked.lower():
+                # Check if the blocked rule matches the host on a host
+                # boundary, or the full URL exactly. Plain endswith let
+                # notyoutube.com match the youtube.com rule.
+                if host_matches_entry(base_domain, blocked) or url.lower() == blocked.lower():
                     logger.info(f"analyze_website - BLOCKED: URL '{url}' matches blocked specific rule '{blocked}' for domain '{domain}'.")
-                    return {'isProductive': False, 'explanation': f"Blocked specific rule: '{blocked}'."}
+                    return {'isProductive': False, 'explanation': f"Blocked specific rule: '{blocked}'.", 'source': 'list'}
         else:
             logger.warning(f"analyze_website - 'blocked_specific' is not a list for domain '{domain}'.")
 
@@ -828,7 +976,7 @@ class ProductivityAnalyzer:
                 if not isinstance(keyword, str): continue
                 if keyword.lower() in url_lower:
                     logger.info(f"analyze_website - BLOCKED: URL '{url}' contains blocked keyword '{keyword}' for domain '{domain}'.")
-                    return {'isProductive': False, 'explanation': f"Blocked keyword found: '{keyword}'."}
+                    return {'isProductive': False, 'explanation': f"Blocked keyword found: '{keyword}'.", 'source': 'list'}
         else:
             logger.warning(f"analyze_website - 'blocked_keywords' is not a list for domain '{domain}'.")
 
@@ -836,13 +984,14 @@ class ProductivityAnalyzer:
         # --- 4. Contextual Analysis (if applicable) ---
         contextualization_required = settings.get("contextualization_required", domain == "personal") # Default to True for personal
         # Context check runs if required AND context data exists
-        run_context_check = contextualization_required and self.context_data
+        effective_context = context_data if context_data is not None else self.context_data
+        run_context_check = contextualization_required and effective_context
 
         context_relevance = {'score': 0.0} # Default score if no context check
         url_signals = self._analyze_url_components(url) # Analyze components once
 
         if run_context_check:
-            context_relevance = self._check_context_relevance(url, url_signals)
+            context_relevance = self._check_context_relevance(url, url_signals, context_data=effective_context)
             logger.debug(f"analyze_website - Context relevance result: {context_relevance}")
 
             # Decision based on high context relevance
@@ -850,7 +999,7 @@ class ProductivityAnalyzer:
                 matched_terms_str = ', '.join(context_relevance.get('matched_terms',[]))
                 explanation = f"High context relevance ({context_relevance['score']}). Matched: {matched_terms_str}"
                 logger.info(f"analyze_website - ALLOWED: {explanation} for URL '{url}'.")
-                return {'isProductive': True, 'explanation': explanation}
+                return {'isProductive': True, 'explanation': explanation, 'source': 'context'}
 
         # --- 5. AI Analysis (Borderline Cases or when context is insufficient) ---
         # Condition to use AI:
@@ -858,7 +1007,7 @@ class ProductivityAnalyzer:
         # - OR Contextualization is required but context is empty (needs AI to decide based on URL alone vs. generic productivity)
         # - OR Contextualization is *not* required (e.g., work/school) and URL didn't hit explicit allow/block rules.
         use_ai = (run_context_check and 0.3 <= context_relevance.get('score', 0.0) <= 0.7) or \
-                 (contextualization_required and not self.context_data) or \
+                 (contextualization_required and not effective_context) or \
                  (not contextualization_required) # Use AI if not explicitly allowed/blocked and context isn't needed/used
 
         if use_ai and not self.ai_available:
@@ -868,12 +1017,32 @@ class ProductivityAnalyzer:
 
         if use_ai:
             logger.debug(f"analyze_website - Proceeding to AI analysis for URL: {url}")
+            # Structured classification path for the real google-genai
+            # client, with verdicts cached by (profile, hostname).
+            if self._client is not None:
+                host_key = (domain, base_domain)
+                cached = self._verdict_cache.get(host_key)
+                if cached and time.time() - cached[0] < self._verdict_cache_ttl:
+                    hit = dict(cached[1]); hit['source'] = 'cache'
+                    return hit
+                ctx_text = ""
+                if effective_context:
+                    try:
+                        ctx_text = json.dumps(effective_context)[:500]
+                    except TypeError:
+                        ctx_text = ""
+                verdict = self._classify_with_gemini(url, domain, url_signals, ctx_text)
+                if verdict is not None:
+                    verdict['source'] = 'gemini'
+                    self._verdict_cache[host_key] = (time.time(), dict(verdict))
+                    return verdict
+                return self._local_fallback_decision(url, url_signals, context_relevance)
             try:
                 context_summary = "No specific task context provided."
-                if self.context_data:
+                if effective_context:
                      # Ensure context_data is serializable (it should be dict)
                      try:
-                         context_summary = json.dumps(self.context_data, indent=2)
+                         context_summary = json.dumps(effective_context, indent=2)
                      except TypeError as json_err:
                          logger.error(f"analyze_website - Context data not JSON serializable: {json_err}")
                          context_summary = "Error: Context data could not be formatted."
@@ -923,20 +1092,20 @@ class ProductivityAnalyzer:
                         logger.info(f"analyze_website - AI Verdict: ALLOW. Reason: {explanation}")
                         # Log additional details for successful analysis that might be useful for debugging direct visits
                         logger.info(f"analyze_website - AI ALLOWED: URL={url}, DOMAIN={domain}, EXPLANATION={explanation}")
-                        return {'isProductive': True, 'explanation': explanation} # Return dict
+                        return {'isProductive': True, 'explanation': explanation, 'source': 'gemini'} # Return dict
                     elif verdict == 'BLOCK':
                         logger.info(f"analyze_website - AI Verdict: BLOCK. Reason: {explanation}")
                         # Log additional details for unsuccessful analysis
                         logger.info(f"analyze_website - AI BLOCKED: URL={url}, DOMAIN={domain}, EXPLANATION={explanation}")
-                        return {'isProductive': False, 'explanation': explanation} # Return dict
+                        return {'isProductive': False, 'explanation': explanation, 'source': 'gemini'} # Return dict
                     else:
                         explanation = f"AI returned unexpected verdict '{verdict}'."
                         logger.warning(f"analyze_website - {explanation} Defaulting to BLOCK.")
-                        return {'isProductive': False, 'explanation': explanation} # Return dict
+                        return {'isProductive': False, 'explanation': explanation, 'source': 'gemini'} # Return dict
                 else:
                     explanation = f"AI response format incorrect ('ALLOW:' or 'BLOCK:' expected). Response: '{decision}'."
                     logger.warning(f"analyze_website - {explanation} Defaulting to BLOCK.")
-                    return {'isProductive': False, 'explanation': explanation} # Return dict
+                    return {'isProductive': False, 'explanation': explanation, 'source': 'gemini'} # Return dict
 
             except Exception as e:
                 # Do not leak internal exception text to the client and do
@@ -953,7 +1122,7 @@ class ProductivityAnalyzer:
         # In this scenario, default to blocking unless context strongly suggested otherwise (which it didn't).
         explanation = "Blocked by default rules (no specific allow match or low context relevance)."
         logger.info(f"analyze_website - BLOCKED (Default): URL '{url}'. Reason: {explanation}")
-        return {'isProductive': False, 'explanation': explanation} # Return dict
+        return {'isProductive': False, 'explanation': explanation, 'source': 'default'} # Return dict
 
 
 # --- Main Execution Logic ---

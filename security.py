@@ -46,7 +46,7 @@ class SecurityConfig:
         'X-XSS-Protection': '1; mode=block',
         'Content-Security-Policy': (
             "default-src 'self' http://localhost:* http://127.0.0.1:*; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* http://127.0.0.1:*; "
+            "script-src 'self' 'unsafe-inline' http://localhost:* http://127.0.0.1:*; "
             "style-src 'self' 'unsafe-inline' http://localhost:* http://127.0.0.1:*; "
             "img-src 'self' data: blob: http://localhost:* http://127.0.0.1:*; "
             "connect-src 'self' http://localhost:* http://127.0.0.1:* chrome-extension:; "
@@ -81,19 +81,10 @@ class SecurityConfig:
 class InputValidator:
     """Input validation utilities."""
     
-    # Regex patterns for validation
-    # The pattern caps a top level domain at six letters, in the group
-    # below. Longer current endings fail this check even when the URL
-    # itself is fine. I keep the strict pattern and count those false
-    # rejects as a known cost of it.
-    URL_PATTERN = re.compile(
-        r'^https?://'  # http:// or https://
-        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'  # domain...
-        r'localhost|'  # localhost...
-        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-        r'(?::\d+)?'  # optional port
-        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-    
+    # URL validation is parse based (see validate_url below). The old
+    # URL_PATTERN regex capped the top level domain at six letters and
+    # falsely rejected valid long-TLD sites, so it was removed rather
+    # than widened.
     EMAIL_PATTERN = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
     
     DOMAIN_PATTERN = re.compile(
@@ -102,48 +93,87 @@ class InputValidator:
     
     @staticmethod
     def validate_url(url: str) -> bool:
-        """Validate URL format and security."""
-        if not url or len(url) > 2048:  # URL length limit
-            return False
-            
-        if not InputValidator.URL_PATTERN.match(url):
-            return False
-            
-        try:
-            parsed = urlparse(url)
+        """Validate URL format and security.
 
-            # Block dangerous schemes
+        Parse based, not regex based. The old URL_PATTERN capped the
+        top level domain at six letters, so valid sites under .technology,
+        .international and other long TLDs were rejected as malformed.
+        Credentials embedded in the URL (user:pass@host) are rejected
+        deliberately: they are a classic host confusion trick
+        (https://example.com@evil.com/) and never a legitimate browsing
+        target for classification.
+        """
+        if not url or not isinstance(url, str) or len(url) > 2048:
+            return False
+
+        try:
+            parsed = urlparse(url.strip())
+
             if parsed.scheme not in ['http', 'https']:
+                return False
+
+            # Reject embedded credentials outright.
+            if parsed.username or parsed.password:
+                logger.warning("Blocked URL with embedded credentials")
                 return False
 
             hostname = parsed.hostname
             if not hostname:
                 return False
+            hostname = hostname.rstrip('.').lower()
+
+            # Single-label hosts are intranet names, not browsing targets.
+            if hostname != 'localhost' and '.' not in hostname:
+                try:
+                    ipaddress.ip_address(hostname)
+                except ValueError:
+                    return False
+
+            # Host must be a plausible DNS name, localhost, or an IP.
+            if hostname != 'localhost' and not InputValidator.DOMAIN_PATTERN.match(hostname):
+                # DOMAIN_PATTERN also matches bare integers and hex-ish
+                # labels; those are handled by the IP checks below.
+                try:
+                    ipaddress.ip_address(hostname)
+                except ValueError:
+                    return False
 
             # Block loopback hosts. The URLs submitted to /analyze are
             # productivity classification targets, never destinations this
             # server fetches, and loopback targets (router admin panels,
             # local services, this app itself) are not legitimate browsing
             # targets for the extension to classify.
-            if hostname in ['localhost', '127.0.0.1', '0.0.0.0', '::1']:
+            if hostname in ['localhost', '::1']:
                 logger.warning(f"Blocked loopback access: {url}")
                 return False
 
-            # Block private, loopback, link-local and reserved IP ranges
+            # Block private, loopback, link-local and reserved IP ranges,
+            # including obfuscated integer and hex IPv4 forms
+            # (http://2130706433/ and http://0x7f000001/ are 127.0.0.1).
+            ip = None
             try:
                 ip = ipaddress.ip_address(hostname)
-                if (ip.is_private or ip.is_loopback or ip.is_link_local
-                        or ip.is_reserved or ip.is_multicast
-                        or ip.is_unspecified):
-                    logger.warning(f"Blocked private/reserved IP access: {url}")
-                    return False
             except ValueError:
-                pass  # Not an IP address, continue validation
+                if hostname.isdigit():
+                    try:
+                        ip = ipaddress.IPv4Address(int(hostname))
+                    except (ValueError, ipaddress.AddressValueError):
+                        ip = None
+                elif hostname.startswith('0x'):
+                    try:
+                        ip = ipaddress.IPv4Address(int(hostname, 16))
+                    except (ValueError, ipaddress.AddressValueError):
+                        ip = None
+            if ip is not None and (ip.is_private or ip.is_loopback
+                                   or ip.is_link_local or ip.is_reserved
+                                   or ip.is_multicast or ip.is_unspecified):
+                logger.warning(f"Blocked private/reserved IP access: {url}")
+                return False
 
             return True
-            
+
         except Exception as e:
-            logger.error(f"URL validation error for {url}: {e}")
+            logger.error(f"URL validation error: {e}")
             return False
     
     @staticmethod

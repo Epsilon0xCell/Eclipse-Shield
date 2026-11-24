@@ -43,7 +43,7 @@ CHROME_EXTENSION_SETTINGS = {
         'http://127.0.0.1:5000'
     ],
     'content_security_policy': {
-        'script_src': "'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*",
+        'script_src': "'self' 'unsafe-inline' http://localhost:*",
         'connect_src': "'self' http://localhost:* chrome-extension:",
         'style_src': "'self' 'unsafe-inline' http://localhost:*"
     }
