@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Eclipse Shield</title>
+<style>
+  :root {
+    --night: #070b18;
+    --panel: #101a3a;
+    --panel-2: #16224a;
+    --line: #24356e;
+    --corona: #f0b429;
+    --corona-hot: #ff8c42;
+    --ivory: #f4f1de;
+    --muted: #9aa3b2;
+    --allow: #7dd87d;
+    --block: #ff6b5e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px;
+    background: radial-gradient(120% 60% at 50% -10%, #1a1408 0%, var(--night) 55%);
+    color: var(--ivory);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+  }
+  header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .eclipse {
+    width: 30px; height: 30px; border-radius: 50%; flex: none;
+    background: #000;
+    box-shadow: 0 0 0 2px var(--corona), 0 0 14px 2px rgba(240, 180, 41, .55);
+  }
+  h1 { font-size: 17px; margin: 0; letter-spacing: .4px; }
+  .tagline { color: var(--muted); margin: 2px 0 14px 40px; font-size: 12px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px; margin-bottom: 12px;
+  }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--block); flex: none; }
+  .dot.on { background: var(--allow); box-shadow: 0 0 8px rgba(125, 216, 125, .8); }
+  .small { color: var(--muted); font-size: 12px; }
+  .profiles { display: flex; gap: 6px; margin-top: 8px; }
+  .profiles button {
+    flex: 1; padding: 8px 0; border-radius: 8px; cursor: pointer;
+    background: var(--panel-2); color: var(--ivory); border: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .profiles button.active {
+    border-color: var(--corona); color: var(--corona);
+    box-shadow: 0 0 10px rgba(240, 180, 41, .25) inset;
+  }
+  #checkBtn {
+    width: 100%; padding: 10px; border: none; border-radius: 8px; cursor: pointer;
+    background: linear-gradient(90deg, var(--corona), var(--corona-hot));
+    color: #1a1005; font-weight: 700; font-size: 14px;
+  }
+  #url { word-break: break-all; }
+  #verdict { margin-top: 10px; display: none; }
+  #verdict.show { display: block; }
+  #verdict .state { font-size: 16px; font-weight: 700; }
+  #verdict.allow .state { color: var(--allow); }
+  #verdict.block .state { color: var(--block); }
+  .chip {
+    display: inline-block; padding: 1px 8px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--muted); font-size: 11px; margin-left: 6px;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="eclipse" aria-hidden="true"></div>
+    <h1>Eclipse Shield</h1>
+  </header>
+  <p class="tagline">The corona holds the line.</p>
+
+  <div class="card">
+    <div class="row">
+      <div id="healthDot" class="dot"></div>
+      <div>
+        <div id="healthText">Backend: checking...</div>
+        <div class="small" id="healthMode">Start the local backend, then reopen this panel.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div>Profile</div>
+    <div class="profiles" id="profiles">
+      <button data-profile="work">Work</button>
+      <button data-profile="school">School</button>
+      <button data-profile="personal">Personal</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="small">Current tab</div>
+    <div id="url">No tab yet.</div>
+    <div style="height:10px"></div>
+    <button id="checkBtn">Check this site</button>
+    <div id="verdict">
+      <span class="state" id="verdictState"></span><span class="chip" id="verdictSource"></span>
+      <div id="verdictReason" style="margin-top:6px"></div>
+    </div>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

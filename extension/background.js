@@ -543,6 +543,7 @@ function cleanupAllData() {
         // After clearing data, block all tabs since there's no active session
         blockAllTabs();
     });
-    sessionStorage.clear();
-    localStorage.clear();
+    // Guarded: these storages do not exist in a service worker.
+    if (typeof sessionStorage !== 'undefined') sessionStorage.clear();
+    if (typeof localStorage !== 'undefined') localStorage.clear();
 }

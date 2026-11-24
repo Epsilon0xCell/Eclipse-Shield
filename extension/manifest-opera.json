@@ -25,7 +25,6 @@
     "128": "icons/icon128.png"
   },
   "host_permissions": [
-    "*://*/*",
     "http://localhost:5000/*",
     "http://127.0.0.1:5000/*"
   ],
@@ -34,8 +33,14 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["matrix-animation/*", "assets/*", "newtab.html"],
-      "matches": ["<all_urls>"]
+      "resources": [
+        "matrix-animation/*",
+        "assets/*",
+        "newtab.html"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ]
 }

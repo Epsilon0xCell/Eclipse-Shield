@@ -43,8 +43,11 @@ function cleanupAllData() {
     chrome.storage.local.clear(() => {
         console.log('All extension data has been cleared');
     });
-    sessionStorage.clear();
-    localStorage.clear();
+    // sessionStorage/localStorage do not exist in a service worker;
+    // touching them here threw a ReferenceError that stopped cleanup
+    // halfway. They only exist in page contexts.
+    if (typeof sessionStorage !== 'undefined') sessionStorage.clear();
+    if (typeof localStorage !== 'undefined') localStorage.clear();
     chrome.tabs.query({}, (tabs) => {
         tabs.forEach((tab) => {
             if (isBlockPage(tab.url)) {
@@ -70,8 +73,15 @@ function checkSessionTimeout() {
     });
 }
 
-// Check session timeout every minute
-setInterval(checkSessionTimeout, 60000);
+// Check session timeout every minute. A Manifest V3 service worker is
+// killed after about 30 seconds idle, so setInterval dies with it and
+// the check silently stops; chrome.alarms is the API that survives.
+chrome.alarms.create('session-timeout-check', { periodInMinutes: 1 });
+chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === 'session-timeout-check') {
+        checkSessionTimeout();
+    }
+});
 
 // === BROWSER RESTART HANDLERS ===
 // Handle browser startup/restart to restore session state properly
@@ -107,6 +117,10 @@ chrome.runtime.onStartup.addListener(async () => {
         refreshNewTabPages();
     }
 });
+
+if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
+    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
+}
 
 chrome.runtime.onInstalled.addListener(async () => {
     console.log('🔧 Extension installed/reloaded, checking session state...');
