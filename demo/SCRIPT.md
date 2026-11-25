@@ -182,3 +182,88 @@ LRA=11 (final file measured -14.5 LUFS integrated).
 - Captions and this file were scanned for em dashes and for leaked home
   paths or usernames: none. Terminal frames use the neutral prompt
   `demo $`.
+
+## Addendum, 2026-11-25: SNI theme and live-footage rebuild
+
+The demo was rebuilt end to end. The extension, the website source on
+main, the separator SVGs, and the logo/banner artwork now carry the SNI
+agency theme (true black base, BF00FF primary accent, pale violet
+secondary text; one muted red, #E5534B, retained only where red is a
+functional block/error indicator). The film's presentation layer uses
+the same theme: black cards, BF00FF hairline accents, white titles, and
+a letterspaced SHADOW NIGHT INTELLIGENCE credit on the opening and
+closing cards only. The soundtrack is the same synthesized track from
+work/make_music.py, regenerated with unchanged parameters and mastered
+to the same loudness target (measured on the delivered file: -14.42
+LUFS integrated, true peak -1.42).
+
+### Capture method: actual live footage
+
+Every product shot is a real screencast (ffmpeg x11grab at 30 fps of an
+Xvfb display) of a live Chromium session running the real MV3 extension
+against the real Flask backend on 127.0.0.1:5000, keyless. No still
+screenshots are used for product shots; only the title and end cards
+are generated graphics. The terminal beats are the same screencast: a
+real bash session (node-pty + xterm.js) in a demo-only harness
+extension page, with commands typed and output scrolling in real time.
+The harness exists because this Chromium build blocks direct loopback
+tab navigations (ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS); the
+product extension's own pages, tabs, and verdicts are all genuine.
+
+Input method, disclosed: the pointer travels visibly via XTEST
+(python-xlib). Clicks and keystrokes are dispatched over CDP
+(Input.dispatchMouseEvent / insertText / dispatchKeyEvent) at the same
+coordinates, because XTEST key events corrupt symbol keys on this X
+server's keymap (a mangled command was caught on camera during setup
+and that take was discarded). The popup's domain select accepted its
+value through the same disclosed eval fallback used in the first
+production (a change event on the real select element).
+
+Two further accommodations, both in the demo browser only, no shipped
+file changed:
+
+- The popup page (served by Flask at /ext-popup inside redirect.html's
+  sandboxed iframe) never lays out in this Chromium build when the
+  iframe carries its sandbox attribute: every element measures 0x0
+  while the identical unsandboxed iframe renders normally (verified
+  side by side, offsetWidth 0 vs 200). For the shoot, the iframe
+  element was replaced at runtime in the live page with an identical
+  unsandboxed iframe (same id, class, style, and src). The flow,
+  questions, session, and storage sync are the product's own.
+- The side panel is captured as an extension-page tab at 430x920, the
+  method disclosed in the first production; profile switches and the
+  check button are real clicks and every verdict is the panel's own
+  live /api/check response. Its current-tab field is set by script
+  because a docked panel cannot be captured in this VM.
+
+The pytest beat is one real run filmed in two takes of the same
+terminal session (the run outlasted the first take's window); the
+result line on camera is the run's own: 61 passed.
+
+### Beats and verdicts (all live responses)
+
+- Terminal: python app.py starts the backend; curl /health and
+  /api/check return real JSON (youtube.com blocked under work, source
+  list).
+- A real tab requesting youtube.com with no session is stopped:
+  NO ACTIVE SESSION.
+- Popup: 30 minutes, Work domain, two context questions answered live;
+  session verified active in chrome.storage.local.
+- With the session running, the tab itself is redirected to the
+  extension's ACCESS BLOCKED page, countdown running.
+- Side panel: Notion allowed / YouTube blocked (work); Canvas allowed
+  / Reddit blocked (school); hero flip: the board-games search is
+  Blocked under Work (keyword: games) and Allowed under Personal;
+  github.com allowed and example.com blocked under Personal keyless
+  local rules.
+- Terminal: python -m pytest -q, 61 passed.
+
+### Files
+
+- eclipse-shield-demo.mp4: 1920x1080, H.264 + AAC 192k, faststart,
+  114.8 s, 18,992,547 bytes.
+- eclipse-shield-demo.gif: 800x450, 15 fps, 180 frames (12 s), cut
+  from the film's hero sequence, two-pass palette, 623,710 bytes.
+- Production scripts for this rebuild live in the workspace archive
+  (demo/work/live_shoot*.js, s3_final.js, live-segs/filter.txt,
+  live-segs/make_cards.py, retheme_sni.py).
