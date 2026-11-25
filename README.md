@@ -1,9 +1,9 @@
 ![Banner: the eclipse shield at full span, distracting app windows bouncing off its corona while the desk below stays calm and lit](banner.png)
 
-# Eclipse Shield <img src="logo.png" alt="Eclipse Shield logo: a black eclipse disc with a gold corona curving into a shield" width="48">
+# Eclipse Shield <img src="logo.png" alt="Eclipse Shield logo: a black eclipse disc with a violet corona curving into a shield" width="48">
 
 **The Corona Shield**
-_A black eclipse hangs over the desk, its gold corona bent into a shield, and every glowing distraction breaks against it and falls away._
+_A black eclipse hangs over the desk, its violet corona bent into a shield, and every glowing distraction breaks against it and falls away._
 
 **AI-powered productivity analyzer that helps users stay focused by blocking unproductive websites and providing contextual task guidance.**
 
@@ -235,7 +235,7 @@ This project is licensed under the [Creative Commons Attribution-NonCommercial 4
 
 ---
 
-![Intro: a worker at a desk at night, the eclipse shield hanging in the sky above, its gold corona turning aside a rain of glowing app windows](intro-banner.png)
+![Intro: a worker at a desk at night, the eclipse shield hanging in the sky above, its violet corona turning aside a rain of glowing app windows](intro-banner.png)
 
 ## Diagrams and maps
 

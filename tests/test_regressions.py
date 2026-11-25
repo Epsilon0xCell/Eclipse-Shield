@@ -188,3 +188,13 @@ def test_gemini_failure_degrades_to_ai_unavailable(local_mode_env):
     assert result["isProductive"] is True
     assert result["source"] == "ai-unavailable"
     assert "fixture backend failure" not in result["explanation"]
+
+
+def test_extension_pages_use_sni_theme():
+    """SNI retheme: extension pages carry BF00FF on black, no Matrix green."""
+    from pathlib import Path
+    ext = Path(__file__).resolve().parent.parent / "extension"
+    for name in ("popup.html", "sidepanel.html", "block.html", "newtab.html"):
+        body = (ext / name).read_text(encoding="utf-8")
+        assert "#BF00FF" in body, name
+        assert "#0f0" not in body.lower().replace("#bf00ff", ""), name

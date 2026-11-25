@@ -16,15 +16,15 @@
         * { margin: 0; padding: 0; box-sizing: border-box; cursor: none !important; }
 
         :root {
-            --matrix-green: #00ff00;
-            --matrix-dark: #002200;
-            --glow-color: rgba(0, 255, 0, 0.5);
+            --sni-purple: #BF00FF;
+            --matrix-dark: #150024;
+            --glow-color: rgba(191, 0, 255, 0.5);
         }
 
         body {
             min-height: 100vh;
             background: #000;
-            color: var(--matrix-green);
+            color: var(--sni-purple);
             font-family: 'Share Tech Mono', monospace;
             display: flex;
             justify-content: center;
@@ -47,15 +47,15 @@
             z-index: 1;
             padding: 3rem;
             background: rgba(0, 15, 0, 0.85); /* More opaque background */
-            border: 2px solid var(--matrix-green); /* Thicker border */
+            border: 2px solid var(--sni-purple); /* Thicker border */
             border-radius: 5px;
             max-width: 600px;
             transform-style: preserve-3d;
             animation: float 6s ease-in-out infinite;
             box-shadow: 
                 0 0 30px var(--glow-color),
-                0 0 60px rgba(0, 255, 0, 0.3),
-                inset 0 0 20px rgba(0, 255, 0, 0.1); /* Enhanced glow */
+                0 0 60px rgba(191, 0, 255, 0.3),
+                inset 0 0 20px rgba(191, 0, 255, 0.1); /* Enhanced glow */
             backdrop-filter: blur(3px);
         }
 
@@ -64,16 +64,16 @@
         }
 
         @keyframes analyzing-pulse {
-            0% { border-color: var(--matrix-green); box-shadow: 0 0 30px var(--glow-color); }
-            50% { border-color: #88ff88; box-shadow: 0 0 50px var(--glow-color); }
-            100% { border-color: var(--matrix-green); box-shadow: 0 0 30px var(--glow-color); }
+            0% { border-color: var(--sni-purple); box-shadow: 0 0 30px var(--glow-color); }
+            50% { border-color: #D8B4FE; box-shadow: 0 0 50px var(--glow-color); }
+            100% { border-color: var(--sni-purple); box-shadow: 0 0 30px var(--glow-color); }
         }
 
         .spinner {
             display: inline-block;
             width: 2rem;
             height: 2rem;
-            border: 3px solid var(--matrix-green);
+            border: 3px solid var(--sni-purple);
             border-radius: 50%;
             border-top-color: transparent;
             animation: spin 1s linear infinite;
@@ -95,7 +95,7 @@
             text-transform: uppercase;
             letter-spacing: 4px;
             position: relative;
-            text-shadow: 0 0 10px var(--matrix-green);
+            text-shadow: 0 0 10px var(--sni-purple);
             animation: glitch 5s infinite;
         }
 
@@ -154,7 +154,7 @@
             height: 100%;
             background: linear-gradient(to bottom,
                 transparent 49%,
-                rgba(0, 255, 0, 0.08) 50%, /* More visible scanlines */
+                rgba(191, 0, 255, 0.08) 50%, /* More visible scanlines */
                 transparent 51%
             );
             background-size: 100% 3px; /* Thinner, more frequent lines */
@@ -180,7 +180,7 @@
             position: fixed;
             width: 20px;
             height: 20px;
-            border: 2px solid #0f0;
+            border: 2px solid #BF00FF;
             border-radius: 50%;
             transform: translate(-50%, -50%);
         }
@@ -189,7 +189,7 @@
             position: fixed;
             width: 4px;
             height: 4px;
-            background-color: #0f0;
+            background-color: #BF00FF;
             border-radius: 50%;
             transform: translate(-50%, -50%);
         }
@@ -212,10 +212,10 @@
             overflow-x: hidden;
             word-break: break-all;
             padding: 10px;
-            border: 1px solid var(--matrix-green);
+            border: 1px solid var(--sni-purple);
             border-radius: 3px;
             margin: 1rem 0;
-            background: rgba(0, 20, 0, 0.3);
+            background: rgba(12, 0, 22, 0.3);
         }
 
         /* Custom scrollbar styles */
@@ -224,18 +224,18 @@
         }
 
         .url-container::-webkit-scrollbar-track {
-            background: rgba(0, 20, 0, 0.5);
+            background: rgba(12, 0, 22, 0.5);
             border-radius: 4px;
         }
 
         .url-container::-webkit-scrollbar-thumb {
-            background: var(--matrix-green);
+            background: var(--sni-purple);
             border-radius: 4px;
             box-shadow: 0 0 5px var(--glow-color);
         }
 
         .url-container::-webkit-scrollbar-thumb:hover {
-            background: #00ff33;
+            background: #BF00FF;
             box-shadow: 0 0 10px var(--glow-color);
         }
 
@@ -244,8 +244,8 @@
             font-family: 'Share Tech Mono', monospace;
             font-size: 1.1rem;
             line-height: 1.4;
-            color: #ff0000;
-            text-shadow: 0 0 10px #ff0000;
+            color: #E5534B;
+            text-shadow: 0 0 10px #E5534B;
         }
     </style>
 </head>

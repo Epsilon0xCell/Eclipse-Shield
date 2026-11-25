@@ -8,9 +8,9 @@
         }
 
         @keyframes text-glow {
-            0% { text-shadow: 0 0 5px #ff0000, 0 0 10px #ff0000; }
-            50% { text-shadow: 0 0 15px #ff0000, 0 0 20px #ff0000; }
-            100% { text-shadow: 0 0 5px #ff0000, 0 0 10px #ff0000; }
+            0% { text-shadow: 0 0 5px #E5534B, 0 0 10px #E5534B; }
+            50% { text-shadow: 0 0 15px #E5534B, 0 0 20px #E5534B; }
+            100% { text-shadow: 0 0 5px #E5534B, 0 0 10px #E5534B; }
         }
 
         @font-face {
@@ -45,11 +45,11 @@
         }
 
         body {
-            color: #0f0;
+            color: #BF00FF;
             font-family: 'Share Tech Mono', monospace;
             position: relative;
-            border: 1px solid #0f0;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            border: 1px solid #BF00FF;
+            box-shadow: 0 0 20px rgba(191, 0, 255, 0.3);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -89,10 +89,10 @@
 
         /* Domain section h3 */
         #domainSelect h3 {
-            color: #0f0;
+            color: #BF00FF;
             text-transform: uppercase;
             letter-spacing: 2px;
-            text-shadow: 0 0 10px #0f0;
+            text-shadow: 0 0 10px #BF00FF;
             position: relative;
             /* overflow: hidden; Removed overflow: hidden; from h3 */
             font-size: 16px;
@@ -105,10 +105,10 @@
 
         /* Questions section h3 */
         #contextQuestions h3 {
-            color: #ff0000;
+            color: #E5534B;
             text-transform: uppercase;
             letter-spacing: 3px;
-            text-shadow: 0 0 10px #ff0000;
+            text-shadow: 0 0 10px #E5534B;
             position: relative;
             /* overflow: hidden; Removed overflow: hidden; from h3 */
             font-size: 18px;
@@ -141,14 +141,14 @@
             margin: 0;
             padding: 10px;
             border-radius: 5px;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 15px rgba(191, 0, 255, 0.2);
         }
 
         #analysisResult h3 {
-            color: #0f0;
+            color: #BF00FF;
             text-transform: uppercase;
             letter-spacing: 3px;
-            text-shadow: 0 0 10px #0f0;
+            text-shadow: 0 0 10px #BF00FF;
             margin: 30px 0 40px 0;
             padding: 0;
             text-align: center;
@@ -177,15 +177,15 @@
 
         .productive {
             background-color: rgba(0, 26, 0, 0.8);
-            border-color: #0f0;
-            color: #0f0;
-            box-shadow: 0 0 25px rgba(0, 255, 0, 0.3);
+            border-color: #BF00FF;
+            color: #BF00FF;
+            box-shadow: 0 0 25px rgba(191, 0, 255, 0.3);
         }
 
         .not-productive {
             background-color: rgba(26, 0, 0, 0.8);
-            border-color: #f00;
-            color: #f00;
+            border-color: #E5534B;
+            color: #E5534B;
             box-shadow: 0 0 25px rgba(255, 0, 0, 0.3);
         }
 
@@ -202,9 +202,9 @@
         }
 
         select, input, button {
-            background-color: rgba(0, 20, 0, 0.8);
-            color: #0f0;
-            border: 1px solid #0f0;
+            background-color: rgba(12, 0, 22, 0.8);
+            color: #BF00FF;
+            border: 1px solid #BF00FF;
             padding: 3px;
             width: 100%;
             margin: 3px 0;
@@ -215,15 +215,15 @@
         }
 
         button {
-            background: linear-gradient(45deg, rgba(0,20,0,0.8), rgba(0,40,0,0.8));
+            background: linear-gradient(45deg, rgba(12, 0, 22, 0.8), rgba(18, 0, 34, 0.8));
             cursor: pointer;
             position: relative;
             overflow: hidden;
         }
 
         button:hover {
-            background: linear-gradient(45deg, rgba(0,40,0,0.8), rgba(0,60,0,0.8));
-            text-shadow: 0 0 10px #0f0;
+            background: linear-gradient(45deg, rgba(18, 0, 34, 0.8), rgba(24, 0, 44, 0.8));
+            text-shadow: 0 0 10px #BF00FF;
             transform: scale(1.02);
         }
 
@@ -234,7 +234,7 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(0,255,0,0.1), transparent);
+            background: linear-gradient(45deg, transparent, rgba(191, 0, 255, 0.1), transparent);
             transform: rotate(45deg);
             animation: shine 3s infinite;
         }
@@ -249,16 +249,16 @@
         }
 
         .loading {
-            color: #f00;
+            color: #E5534B;
             font-style: italic;
             animation: text-glow 1s infinite;
             text-align: center; /* ADDED: Center loading text */
         }
 
         .error {
-            color: #f00;
+            color: #E5534B;
             margin: 10px 0;
-            border-left: 3px solid #f00;
+            border-left: 3px solid #E5534B;
             padding-left: 10px;
             text-align: center; /* ADDED: Center error text */
         }
@@ -297,7 +297,7 @@
             background-color: rgba(0, 0, 0, 0.7);
             padding: 15px;
             border-radius: 5px;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 15px rgba(191, 0, 255, 0.2);
         }
 
         /* Scanline effect */
@@ -330,12 +330,12 @@
             font-size: 14px;
             line-height: 1.2;
             letter-spacing: 2px;
-            color: #0f0;
+            color: #BF00FF;
             min-height: 35px;    /* Reduced from 40px */
             max-height: 70px;    /* Reduced from 80px */
             padding: 5px;
-            border: 1px solid #0f0;
-            background-color: rgba(0, 20, 0, 0.2);
+            border: 1px solid #BF00FF;
+            background-color: rgba(12, 0, 22, 0.2);
             overflow: hidden;
             position: relative;
             margin-top: 5px;
@@ -354,7 +354,7 @@
             left: 0;
             right: 0;
             height: 2px;
-            background: linear-gradient(to right, #000, #0f0, #000);
+            background: linear-gradient(to right, #000, #BF00FF, #000);
             animation: scanline 2s linear infinite;
         }
 
@@ -370,7 +370,7 @@
             display: inline-block;
             width: 8px;
             height: 15px;
-            background: #0f0;
+            background: #BF00FF;
             margin-left: 5px;
             animation: blink 1s step-end infinite;
         }
@@ -378,8 +378,8 @@
         .matrix-output {
             position: relative;
             padding: 15px;
-            background: rgba(0,20,0,0.3);
-            border: 1px solid #0f0;
+            background: rgba(12, 0, 22, 0.3);
+            border: 1px solid #BF00FF;
             margin-top: 10px;
             overflow: hidden;
         }
@@ -401,11 +401,11 @@
 
         input {
             cursor: text;
-            caret-color: #0f0;
+            caret-color: #BF00FF;
         }
 
         input:focus {
-            caret-color: #0f0;
+            caret-color: #BF00FF;
         }
 
         button, select {
@@ -431,7 +431,7 @@
         .particle {
             pointer-events: none;
             position: fixed;
-            background: #0f0;
+            background: #BF00FF;
             border-radius: 50%;
             opacity: 0;
             z-index: 9999;
@@ -454,8 +454,8 @@
             margin-left: 20px; /* Adjusted for centering */
             margin-right: 15px; /* Adjusted for centering */
             padding: 8px;
-            background: rgba(0, 20, 0, 0.3);
-            border: 1px solid #0f0;
+            background: rgba(12, 0, 22, 0.3);
+            border: 1px solid #BF00FF;
             word-wrap: break-word;
         }
 
@@ -465,11 +465,11 @@
         }
 
         #question::-webkit-scrollbar-track {
-            background: rgba(0, 20, 0, 0.3);
+            background: rgba(12, 0, 22, 0.3);
         }
 
         #question::-webkit-scrollbar-thumb {
-            background: #0f0;
+            background: #BF00FF;
             border-radius: 3px;
         }
 
@@ -529,11 +529,11 @@
 
         /* Color variants for scan-lines */
         .scan-line-green {
-            color: #0f0;
+            color: #BF00FF;
         }
 
         .scan-line-red {
-            color: #ff0000;
+            color: #E5534B;
         }
 
         /* Restore glow effects and animations */
@@ -572,7 +572,7 @@
             left: 5%;
             width: 90%;
             height: 2px;
-            background: linear-gradient(90deg, transparent, #0f0, transparent);
+            background: linear-gradient(90deg, transparent, #BF00FF, transparent);
             animation: scan-line 2s linear infinite;
         }
 
@@ -589,7 +589,7 @@
             left: 5%;
             width: 90%;
             height: 2px;
-            background: linear-gradient(90deg, transparent, #0f0, transparent);
+            background: linear-gradient(90deg, transparent, #BF00FF, transparent);
             animation: scan-line 2s linear infinite reverse;
         }
 
@@ -606,7 +606,7 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(0,255,0,0.1), transparent);
+            background: linear-gradient(45deg, transparent, rgba(191, 0, 255, 0.1), transparent);
             transform: rotate(45deg);
             animation: shine 3s infinite;
         }
@@ -623,7 +623,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle, rgba(0, 255, 0, 0.1), transparent);
+            background: radial-gradient(circle, rgba(191, 0, 255, 0.1), transparent);
             animation: pulse 5s infinite alternate;
             z-index: -1;
         }
@@ -659,11 +659,11 @@
         #analysisBlockDuration {
             margin-top: 30px;
             padding: 20px;
-            border-top: 1px solid rgba(0, 255, 0, 0.3);
+            border-top: 1px solid rgba(191, 0, 255, 0.3);
         }
 
         #analysisBlockDuration h4 {
-            color: #0f0;
+            color: #BF00FF;
             font-size: 18px;
             margin-bottom: 15px;
             text-transform: uppercase;
@@ -672,10 +672,10 @@
 
         #analysisSection h3 {
             position: relative;
-            color: #0f0;
+            color: #BF00FF;
             text-transform: uppercase;
             letter-spacing: 2px;
-            text-shadow: 0 0 10px #0f0;
+            text-shadow: 0 0 10px #BF00FF;
             font-size: 24px;
             margin-bottom: 20px;
             animation: title-appear 0.5s ease-out;
@@ -693,8 +693,8 @@
             margin: 0 auto;
             max-width: 80%;
             font-family: 'Share Tech Mono', monospace;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
-            border: 1px solid #0f0;
+            box-shadow: 0 0 10px rgba(191, 0, 255, 0.3);
+            border: 1px solid #BF00FF;
             font-size: 16px;
             line-height: 1.5;
             animation: fade-in 0.5s ease-out;
@@ -703,21 +703,21 @@
         }
 
         #result .productive {
-            color: #0f0;
+            color: #BF00FF;
             font-size: 1.2em;
             margin-bottom: 15px;
-            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+            text-shadow: 0 0 5px rgba(191, 0, 255, 0.5);
         }
 
         #result .not-productive {
-            color: #ff4444;
+            color: #E5534B;
             font-size: 1.2em;
             margin-bottom: 15px;
-            text-shadow: 0 0 5px rgba(255, 68, 68, 0.5);
+            text-shadow: 0 0 5px rgba(229, 83, 75, 0.5);
         }
 
         #result .explanation {
-            color: #88ff88;
+            color: #D8B4FE;
             margin: 15px 0;
             font-size: 0.9em;
             line-height: 1.4;
@@ -729,7 +729,7 @@
         }
 
         #result .recommendations h4 {
-            color: #00ff00;
+            color: #BF00FF;
             margin-bottom: 10px;
             font-size: 1em;
         }
@@ -750,35 +750,35 @@
             content: ">";
             position: absolute;
             left: 0;
-            color: #00ff00;
+            color: #BF00FF;
         }
 
         #result .error {
-            color: #ff4444;
+            color: #E5534B;
             font-size: 1em;
             padding: 10px;
-            border: 1px solid #ff4444;
+            border: 1px solid #E5534B;
             border-radius: 5px;
-            background: rgba(255, 68, 68, 0.1);
+            background: rgba(229, 83, 75, 0.1);
         }
         
         /* Analysis stats styles */
         .analysis-stats {
-            background: rgba(0, 20, 0, 0.4);
-            border: 1px solid #0f0;
+            background: rgba(12, 0, 22, 0.4);
+            border: 1px solid #BF00FF;
             border-radius: 5px;
             padding: 15px;
             margin-bottom: 20px;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 10px rgba(191, 0, 255, 0.2);
         }
         
         .analysis-stats h4 {
-            color: #0f0;
+            color: #BF00FF;
             margin-top: 0;
             margin-bottom: 15px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            text-shadow: 0 0 5px #0f0;
+            text-shadow: 0 0 5px #BF00FF;
             text-align: center;
             position: relative;
         }
@@ -790,8 +790,8 @@
             left: 25%;
             width: 50%;
             height: 1px;
-            background: linear-gradient(90deg, transparent, #0f0, transparent);
-            box-shadow: 0 0 5px #0f0;
+            background: linear-gradient(90deg, transparent, #BF00FF, transparent);
+            box-shadow: 0 0 5px #BF00FF;
         }
         
         .stat-item {
@@ -799,46 +799,46 @@
             justify-content: space-between;
             margin: 10px 0;
             padding: 5px 0;
-            border-bottom: 1px dashed rgba(0, 255, 0, 0.3);
+            border-bottom: 1px dashed rgba(191, 0, 255, 0.3);
         }
         
         .stat-label {
             font-size: 0.9em;
-            color: #88ff88;
+            color: #D8B4FE;
         }
         
         .stat-value {
             font-weight: bold;
             font-size: 1.1em;
-            color: #0f0;
-            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+            color: #BF00FF;
+            text-shadow: 0 0 5px rgba(191, 0, 255, 0.5);
         }
         
         .stat-value.allowed {
-            color: #00ff00;
+            color: #BF00FF;
         }
         
         .stat-value.blocked {
-            color: #ff4444;
+            color: #E5534B;
         }
         
         /* Latest activity styles */
         .latest-activity {
-            background: rgba(0, 20, 0, 0.4);
-            border: 1px solid #0f0;
+            background: rgba(12, 0, 22, 0.4);
+            border: 1px solid #BF00FF;
             border-radius: 5px;
             padding: 15px;
             margin-bottom: 20px;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 10px rgba(191, 0, 255, 0.2);
         }
         
         .latest-activity h4 {
-            color: #0f0;
+            color: #BF00FF;
             margin-top: 0;
             margin-bottom: 15px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            text-shadow: 0 0 5px #0f0;
+            text-shadow: 0 0 5px #BF00FF;
             text-align: center;
             position: relative;
         }
@@ -850,25 +850,25 @@
             left: 25%;
             width: 50%;
             height: 1px;
-            background: linear-gradient(90deg, transparent, #0f0, transparent);
-            box-shadow: 0 0 5px #0f0;
+            background: linear-gradient(90deg, transparent, #BF00FF, transparent);
+            box-shadow: 0 0 5px #BF00FF;
         }
         
         .activity-item {
-            background: rgba(0, 30, 0, 0.5);
+            background: rgba(15, 0, 28, 0.5);
             padding: 10px;
             border-radius: 3px;
-            border-left: 3px solid #0f0;
+            border-left: 3px solid #BF00FF;
         }
         
         .activity-item.blocked {
-            border-left-color: #ff4444;
+            border-left-color: #E5534B;
             background: rgba(30, 0, 0, 0.5);
         }
         
         .activity-item.allowed {
-            border-left-color: #00ff00;
-            background: rgba(0, 30, 0, 0.5);
+            border-left-color: #BF00FF;
+            background: rgba(15, 0, 28, 0.5);
         }
         
         .activity-item.neutral {
@@ -889,20 +889,20 @@
         }
         
         .activity-status.blocked {
-            color: #ff4444;
-            text-shadow: 0 0 5px rgba(255, 68, 68, 0.5);
+            color: #E5534B;
+            text-shadow: 0 0 5px rgba(229, 83, 75, 0.5);
         }
         
         .activity-status.allowed {
-            color: #00ff00;
-            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+            color: #BF00FF;
+            text-shadow: 0 0 5px rgba(191, 0, 255, 0.5);
         }
         
         .activity-reason {
             font-size: 0.85em;
             font-style: italic;
-            color: #88ff88;
-            border-top: 1px dashed rgba(0, 255, 0, 0.3);
+            color: #D8B4FE;
+            border-top: 1px dashed rgba(191, 0, 255, 0.3);
             padding-top: 5px;
             margin-top: 5px;
         }
@@ -916,21 +916,21 @@
         
         /* Session info styles */
         .session-info {
-            background: rgba(0, 20, 0, 0.4);
-            border: 1px solid #0f0;
+            background: rgba(12, 0, 22, 0.4);
+            border: 1px solid #BF00FF;
             border-radius: 5px;
             padding: 15px;
             margin-bottom: 20px;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 10px rgba(191, 0, 255, 0.2);
         }
         
         .session-info h4 {
-            color: #0f0;
+            color: #BF00FF;
             margin-top: 0;
             margin-bottom: 15px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            text-shadow: 0 0 5px #0f0;
+            text-shadow: 0 0 5px #BF00FF;
             text-align: center;
             position: relative;
         }
@@ -942,8 +942,8 @@
             left: 25%;
             width: 50%;
             height: 1px;
-            background: linear-gradient(90deg, transparent, #0f0, transparent);
-            box-shadow: 0 0 5px #0f0;
+            background: linear-gradient(90deg, transparent, #BF00FF, transparent);
+            box-shadow: 0 0 5px #BF00FF;
         }
         
         .session-item {
@@ -951,18 +951,18 @@
             justify-content: space-between;
             margin: 10px 0;
             padding: 5px 0;
-            border-bottom: 1px dashed rgba(0, 255, 0, 0.3);
+            border-bottom: 1px dashed rgba(191, 0, 255, 0.3);
         }
         
         .session-label {
             font-size: 0.9em;
-            color: #88ff88;
+            color: #D8B4FE;
         }
         
         .session-value {
             font-weight: bold;
-            color: #0f0;
-            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+            color: #BF00FF;
+            text-shadow: 0 0 5px rgba(191, 0, 255, 0.5);
         }
         
         .session-value.domain {
@@ -986,9 +986,9 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             font-size: 0.9em;
-            background: rgba(0, 40, 0, 0.8);
-            border: 1px solid #0f0;
-            color: #0f0;
+            background: rgba(18, 0, 34, 0.8);
+            border: 1px solid #BF00FF;
+            color: #BF00FF;
             border-radius: 3px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -997,8 +997,8 @@
         }
         
         #refreshAnalysis:hover {
-            background: rgba(0, 60, 0, 0.8);
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+            background: rgba(24, 0, 44, 0.8);
+            box-shadow: 0 0 15px rgba(191, 0, 255, 0.3);
         }
         
         #refreshAnalysis::before {
@@ -1008,7 +1008,7 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(0, 255, 0, 0.1), transparent);
+            background: linear-gradient(45deg, transparent, rgba(191, 0, 255, 0.1), transparent);
             transform: rotate(45deg);
             animation: shine 3s infinite;
         }
@@ -1019,19 +1019,19 @@
         }
 
         #analysisSection::-webkit-scrollbar-thumb {
-            background: rgba(0, 255, 0, 0.5);
+            background: rgba(191, 0, 255, 0.5);
             border-radius: 4px;
-            border: 1px solid #0f0;
-            box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+            border: 1px solid #BF00FF;
+            box-shadow: 0 0 5px rgba(191, 0, 255, 0.3);
         }
 
         #analysisSection::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 255, 0, 0.7);
-            box-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+            background: rgba(191, 0, 255, 0.7);
+            box-shadow: 0 0 8px rgba(191, 0, 255, 0.5);
         }
 
         #analysisSection::-webkit-scrollbar-track {
-            background: rgba(0, 20, 0, 0.2);
+            background: rgba(12, 0, 22, 0.2);
             border-radius: 4px;
         }
     </style>
@@ -1046,29 +1046,29 @@
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
-            border: 2px solid #0f0;
+            border: 2px solid #BF00FF;
             padding: 25px 50px;
             background: rgba(0, 10, 0, 0.7);
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 20px rgba(191, 0, 255, 0.2);
             min-width: 400px;
         }
 
         #blockDurationSelect h3 {
-            color: #0f0;
+            color: #BF00FF;
             font-size: 24px;
             margin: 0 0 25px 0;
             text-transform: uppercase;
             letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            text-shadow: 0 0 10px rgba(191, 0, 255, 0.5);
         }
 
         #blockDurationSelect input,
         #blockDurationSelect select {
             width: 140px;
             height: 40px;
-            background: rgba(0, 20, 0, 0.8);
-            border: 2px solid #0f0;
-            color: #0f0;
+            background: rgba(12, 0, 22, 0.8);
+            border: 2px solid #BF00FF;
+            color: #BF00FF;
             font-size: 20px;
             text-align: center;
             margin: 0 10px;
@@ -1079,9 +1079,9 @@
             width: 200px;
             height: 45px;
             margin-top: 25px;
-            background: rgba(0, 40, 0, 0.8);
-            border: 2px solid #0f0;
-            color: #0f0;
+            background: rgba(18, 0, 34, 0.8);
+            border: 2px solid #BF00FF;
+            color: #BF00FF;
             font-size: 18px;
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -1090,8 +1090,8 @@
         }
 
         #blockDurationSelect button:hover {
-            background: rgba(0, 60, 0, 0.8);
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+            background: rgba(24, 0, 44, 0.8);
+            box-shadow: 0 0 15px rgba(191, 0, 255, 0.3);
         }
     </style>
     <div id="blockDurationSelect">

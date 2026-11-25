@@ -513,9 +513,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (Math.random() > 0.98) {
                     ctx.fillStyle = '#FFF';
                     ctx.shadowBlur = 10;
-                    ctx.shadowColor = '#0F0';
+                    ctx.shadowColor = '#BF00FF';
                 } else {
-                    ctx.fillStyle = '#0F0';
+                    ctx.fillStyle = '#BF00FF';
                     ctx.shadowBlur = 0;
                 }
 

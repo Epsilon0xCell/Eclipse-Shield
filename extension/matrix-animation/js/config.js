@@ -113,10 +113,10 @@ const defaults = {
 	density: 1, // In volumetric mode, the number of actual columns compared to the grid
 	palette: [
 		// The color palette that glyph brightness is color mapped to
-		{ color: hsl(0.3, 0.9, 0.0), at: 0.0 },
-		{ color: hsl(0.3, 0.9, 0.2), at: 0.2 },
-		{ color: hsl(0.3, 0.9, 0.7), at: 0.7 },
-		{ color: hsl(0.3, 0.9, 0.8), at: 0.8 },
+		{ color: hsl(0.772, 0.9, 0.0), at: 0.0 },
+		{ color: hsl(0.772, 0.9, 0.2), at: 0.2 },
+		{ color: hsl(0.772, 0.9, 0.7), at: 0.7 },
+		{ color: hsl(0.772, 0.9, 0.8), at: 0.8 },
 	],
 	raindropLength: 0.75, // Adjusts the frequency of raindrops (and their length) in a column
 	slant: 0, // The angle at which rain falls; the orientation of the glyph grid
