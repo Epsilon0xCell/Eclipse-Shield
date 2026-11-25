@@ -420,7 +420,7 @@ function draw() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Multiple green shades for depth
-    const colors = ['#f0b429', '#ffd76a', '#ff8c42', '#f4f1de', '#b97f16'];
+    const colors = ['#0F0', '#0F8', '#4F4', '#8F8', '#AFA'];
     ctx.font = fontSize + 'px "Share Tech Mono", monospace';
     
     for (let i = 0; i < drops.length; i++) {
@@ -431,7 +431,7 @@ function draw() {
         ctx.fillStyle = colors[colorIndex];
         
         // Add glow effect
-        ctx.shadowColor = '#f0b429';
+        ctx.shadowColor = '#0F0';
         ctx.shadowBlur = 3;
         
         ctx.fillText(text, i * fontSize, drops[i] * fontSize);
