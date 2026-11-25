@@ -162,6 +162,21 @@ def test_structured_gemini_verdict_and_cache(local_mode_env):
     assert analyzer._client.models.calls == 1
 
 
+def test_extension_pages_use_no_remote_fonts():
+    # Regression (found in the 2026-11-24 exhaustive test pass):
+    # block.html imported Share Tech Mono from Google Fonts and
+    # newtab.html listed a fonts.gstatic.com fallback, while popup.html
+    # already used the bundled local face. Extension pages must load
+    # fonts from the package: remote imports fail offline and leak the
+    # page view to a third party.
+    import pathlib
+    ext = pathlib.Path(__file__).resolve().parent.parent / "extension"
+    for name in ("block.html", "newtab.html", "popup.html", "sidepanel.html"):
+        text = (ext / name).read_text()
+        assert "fonts.googleapis.com" not in text, name
+        assert "fonts.gstatic.com" not in text, name
+
+
 def test_gemini_failure_degrades_to_ai_unavailable(local_mode_env):
     analyzer = _analyzer_with_fake_client(local_mode_env)
 

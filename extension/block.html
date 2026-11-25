@@ -3,7 +3,15 @@
 <head>
     <title>Access Blocked</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        /* Local font only: remote font imports fail offline and do not
+           belong in an extension page. Same bundled face as popup.html. */
+        @font-face {
+            font-family: 'Share Tech Mono';
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+            src: url('assets/ShareTechMono-Regular.woff2') format('woff2');
+        }
 
         * { margin: 0; padding: 0; box-sizing: border-box; cursor: none !important; }
 
